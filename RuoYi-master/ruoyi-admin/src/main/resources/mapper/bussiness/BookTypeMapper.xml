@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookTypeMapper">
+    
+    <resultMap type="BookType" id="BookTypeResult">
+        <result property="id"    column="id"    />
+        <result property="parentId"    column="parent_id"    />
+        <result property="tname"    column="tname"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="status"    column="status"    />
+    </resultMap>
+
+    <sql id="selectBookTypeVo">
+        select id, parent_id, tname, order_num, status from book_type
+    </sql>
+
+    <select id="selectBookTypeList" parameterType="BookType" resultMap="BookTypeResult">
+        <include refid="selectBookTypeVo"/>
+        <where>  
+            <if test="parentId != null "> and parent_id = #{parentId}</if>
+            <if test="tname != null  and tname != ''"> and tname like concat('%', #{tname}, '%')</if>
+            <if test="orderNum != null "> and order_num = #{orderNum}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectBookTypeById" parameterType="Long" resultMap="BookTypeResult">
+        <include refid="selectBookTypeVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertBookType" parameterType="BookType">
+        insert into book_type
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="parentId != null">parent_id,</if>
+            <if test="tname != null and tname != ''">tname,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="status != null">status,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="parentId != null">#{parentId},</if>
+            <if test="tname != null and tname != ''">#{tname},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="status != null">#{status},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBookType" parameterType="BookType">
+        update book_type
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="tname != null and tname != ''">tname = #{tname},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="status != null">status = #{status},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteBookTypeById" parameterType="Long">
+        delete from book_type where id = #{id}
+    </delete>
+
+    <delete id="deleteBookTypeByIds" parameterType="String">
+        delete from book_type where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
