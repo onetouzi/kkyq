@@ -31,12 +31,6 @@
                 </div>
             </div>
         </form>
-        <div class="col-sm-8">
-            <div class="input-group">
-                <input name="tname" onclick="selectBookTypeTree()" id="treeName" type="text" placeholder="请选择图书类型" class="form-control">
-                <span class="input-group-addon"><i class="fa fa-search"></i></span>
-            </div>
-        </div>
     </div>
     <th:block th:include="include :: footer" />
     <script th:inline="javascript">
@@ -51,24 +45,5 @@
             }
         }
     </script>
-    function selectBookTypeTree() {
-    var treeId = $("#treeId").val();
-    var typeId = $.common.isEmpty(treeId) ? "1" : $("#treeId").val();
-    var url = ctx + "business/bookType/selectBookTypeTree/" + typeId;
-    var options = {
-    title: '选择图书类型',
-    width: "380",
-    url: url,
-    callBack: doSubmit
-    };
-    $.modal.openOptions(options);
-    }
-
-    function doSubmit(index, layero){
-    var body = $.modal.getChildFrame(index);
-    $("#treeId").val(body.find('#treeId').val());
-    $("#treeName").val(body.find('#treeName').val());
-    $.modal.close(index);
-    }
 </body>
 </html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('图书管理列表')" />
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="formId">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>图书编号：</label>
+                            <input type="text" name="bookNo"/>
+                        </li>
+                        <li>
+                            <label>图书名称：</label>
+                            <input type="text" name="bookName"/>
+                        </li>
+                        <li>
+                            <label>图片：</label>
+                            <input type="text" name="img"/>
+                        </li>
+                        <li>
+                            <label>作者：</label>
+                            <input type="text" name="author"/>
+                        </li>
+                        <li>
+                            <label>出版社：</label>
+                            <input type="text" name="press"/>
+                        </li>
+                        <li>
+                            <label>出版时间：</label>
+                            <input type="text" name="publicTime" class="form-control laydate" placeholder="yyyy-MM-dd" onclick="laydate({istime: false, format: 'yyyy-MM-dd'})"/>
+                        </li>
+                        <li>
+                            <label>库存：</label>
+                            <input type="text" name="stock"/>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="btn-group-sm" id="toolbar" role="group">
+            <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="business:book:add">
+                <i class="fa fa-plus"></i> 添加
+            </a>
+            <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="business:book:edit">
+                <i class="fa fa-edit"></i> 修改
+            </a>
+            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="business:book:remove">
+                <i class="fa fa-remove"></i> 删除
+            </a>
+            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="business:book:export">
+                <i class="fa fa-download"></i> 导出
+            </a>
+        </div>
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+    // 1. 定义状态字典数据（若依框架字典，需与后台字典配置一致）
+    var statusDatas = [[${@dict.getType('sys_normal_disable')}]];
+    // 2. 获取权限标识（转为字符串判断，避免布尔值直接作为类名）
+    var editFlag = [[${@permission.hasPermi('business:book:edit')}]] ? '' : 'disabled';
+    var removeFlag = [[${@permission.hasPermi('business:book:remove')}]] ? '' : 'disabled';
+    var prefix = ctx + "business/book";
+
+    $(function() {
+        var options = {
+            url: prefix + "/list",
+            createUrl: prefix + "/add",
+            updateUrl: prefix + "/edit/{id}",
+            removeUrl: prefix + "/remove",
+            exportUrl: prefix + "/export",
+            modalName: "图书管理",
+            columns: [{
+                checkbox: true
+            },
+                {
+                    field: 'id',
+                    title: '主键',
+                    visible: false
+                },
+                {
+                    field: 'bookNo',
+                    title: '图书编号'
+                },
+                {
+                    field: 'bookName',
+                    title: '图书名称'
+                },
+                {
+                    field: 'img',
+                    title: '图片',
+                    // 格式化图片为图片标签展示
+                    formatter: function(value, row, index) {
+                        if (value) {
+                            return '<img src="' + value + '" width="50" height="70" alt="图书封面"/>';
+                        }
+                        return '无图片';
+                    }
+                },
+                {
+                    field: 'author',
+                    title: '作者'
+                },
+                {
+                    field: 'press',
+                    title: '出版社'
+                },
+                {
+                    field: 'publicTime',
+                    title: '出版时间'
+                },
+                {
+                    field: 'stock',
+                    title: '库存'
+                },
+                {
+                    field: 'status',
+                    title: '状态',
+                    // 修复：添加逗号分隔属性
+                    formatter:function (value, row, index){
+                        return $.table.selectDictLabel(statusDatas, value);
+                    }
+                },
+                // 修复：拆分图书类型列为独立列，修正字段名拼写错误
+                {
+                    field: 'bookType.tname',
+                    title: '图书类型',
+                    // 处理嵌套对象属性为空的情况
+                    formatter: function(value, row, index) {
+                        return row.bookType ? row.bookType.tname : '未分类';
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        // 修复：权限控制改为判断disabled类名
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+        };
+        $.table.init(options);
+    });
+</script>
+</body>
+</html>

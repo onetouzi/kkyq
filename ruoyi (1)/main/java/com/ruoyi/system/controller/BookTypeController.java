@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.business;
+package com.ruoyi.system.controller;
 
 import java.util.List;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -12,9 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.web.controller.domain.BookType;
-import com.ruoyi.web.controller.service.IBookTypeService;
-import com.ruoyi.web.controller.service.impl.BookTypeServiceImpl;
+import com.ruoyi.system.domain.BookType;
+import com.ruoyi.system.service.IBookTypeService;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.poi.ExcelUtil;
@@ -126,6 +125,4 @@ public class BookTypeController extends BaseController
     {
         return toAjax(bookTypeService.deleteBookTypeByIds(ids));
     }
-
-
 }
