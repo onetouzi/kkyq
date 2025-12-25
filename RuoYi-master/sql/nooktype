@@ -1,0 +1,10 @@
+create table book_type
+(
+    id        int         not null comment '主键'
+        primary key,
+    parent_id int         null comment '父类型',
+    tname     varchar(30) null comment '类型名称',
+    order_num int         null comment '排序',
+    status    char        null comment '状态'
+);
+

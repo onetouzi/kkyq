@@ -1,0 +1,14 @@
+create table book
+(
+    id          int auto_increment comment '主键'
+        primary key,
+    book_no     varchar(20) null comment '图书编号',
+    book_name   varchar(20) null comment '图书名称',
+    img         varchar(50) null comment '图片',
+    author      varchar(20) null comment '作者',
+    press       varchar(20) null comment '出版社',
+    public_time char(4)     null comment '出版时间',
+    stock       int         null comment '库存',
+    status      char        null comment '状态'
+);
+
