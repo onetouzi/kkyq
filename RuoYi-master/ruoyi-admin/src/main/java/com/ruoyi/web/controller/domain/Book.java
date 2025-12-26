@@ -7,16 +7,11 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 图书管理对象 book
- * 
+ *
  * @author azzzz
  * @date 2025-12-24
  */
-
-
-public class Book extends BaseEntity
-
-{
-    private BookType bookType;
+public class Book extends BaseEntity {
     //快捷键生成get set方法  alt+insert
     public BookType getBookType() {
         return bookType;
@@ -61,92 +56,110 @@ public class Book extends BaseEntity
     @Excel(name = "状态")
     private String status;
 
-    public void setId(Long id) 
+    // ========== 新增 typeId 字段（核心修复） ==========
+    /** 图书类型ID */
+    @Excel(name = "图书类型ID")
+    private Long typeId;
+
+    @Excel(name = "图书类比")
+    private BookType bookType;
+
+    // ========== 新增 typeId 的 getter/setter ==========
+    public Long getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(Long typeId) {
+        this.typeId = typeId;
+    }
+
+    // 以下是原有字段的 getter/setter（无需修改）
+    public void setId(Long id)
     {
         this.id = id;
     }
 
-    public Long getId() 
+    public Long getId()
     {
         return id;
     }
 
-    public void setBookNo(String bookNo) 
+    public void setBookNo(String bookNo)
     {
         this.bookNo = bookNo;
     }
 
-    public String getBookNo() 
+    public String getBookNo()
     {
         return bookNo;
     }
 
-    public void setBookName(String bookName) 
+    public void setBookName(String bookName)
     {
         this.bookName = bookName;
     }
 
-    public String getBookName() 
+    public String getBookName()
     {
         return bookName;
     }
 
-    public void setImg(String img) 
+    public void setImg(String img)
     {
         this.img = img;
     }
 
-    public String getImg() 
+    public String getImg()
     {
         return img;
     }
 
-    public void setAuthor(String author) 
+    public void setAuthor(String author)
     {
         this.author = author;
     }
 
-    public String getAuthor() 
+    public String getAuthor()
     {
         return author;
     }
 
-    public void setPress(String press) 
+    public void setPress(String press)
     {
         this.press = press;
     }
 
-    public String getPress() 
+    public String getPress()
     {
         return press;
     }
 
-    public void setPublicTime(String publicTime) 
+    public void setPublicTime(String publicTime)
     {
         this.publicTime = publicTime;
     }
 
-    public String getPublicTime() 
+    public String getPublicTime()
     {
         return publicTime;
     }
 
-    public void setStock(Long stock) 
+    public void setStock(Long stock)
     {
         this.stock = stock;
     }
 
-    public Long getStock() 
+    public Long getStock()
     {
         return stock;
     }
 
-    public void setStatus(String status) 
+    public void setStatus(String status)
     {
         this.status = status;
     }
 
-    public String getStatus() 
+    public String getStatus()
     {
         return status;
     }
@@ -154,15 +167,16 @@ public class Book extends BaseEntity
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("bookNo", getBookNo())
-            .append("bookName", getBookName())
-            .append("img", getImg())
-            .append("author", getAuthor())
-            .append("press", getPress())
-            .append("publicTime", getPublicTime())
-            .append("stock", getStock())
-            .append("status", getStatus())
-            .toString();
+                .append("id", getId())
+                .append("bookNo", getBookNo())
+                .append("bookName", getBookName())
+                .append("img", getImg())
+                .append("author", getAuthor())
+                .append("press", getPress())
+                .append("publicTime", getPublicTime())
+                .append("stock", getStock())
+                .append("status", getStatus())
+                .append("typeId", getTypeId()) // 补充到toString中，便于调试
+                .toString();
     }
 }

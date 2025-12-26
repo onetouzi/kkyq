@@ -1,81 +1,144 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:include="include :: header('新增图书管理')" />
+    <th:block th:include="include :: header('新增图书管理')"/>
 </head>
 <body class="white-bg">
-    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
-        <form class="form-horizontal m" id="form-book-add">
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">图书编号：</label>
-                    <div class="col-sm-8">
-                        <input name="bookNo" class="form-control" type="text">
-                    </div>
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-book-add">
+        <!-- 双列布局：左列 col-md-6 -->
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">图书编号：</label>
+                <div class="col-sm-9">
+                    <input name="bookNo" class="form-control" type="text" placeholder="请输入图书编号">
                 </div>
             </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label is-required">图书名称：</label>
-                    <div class="col-sm-8">
-                        <input name="bookName" class="form-control" type="text" required>
-                    </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">图书名称：</label>
+                <div class="col-sm-9">
+                    <input name="bookName" class="form-control" type="text" required placeholder="请输入图书名称">
                 </div>
             </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">图片：</label>
-                    <div class="col-sm-8">
-                        <input name="img" class="form-control" type="text">
-                    </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">图片：</label>
+                <div class="col-sm-9">
+                    <input name="img" class="form-control" type="text" placeholder="请输入封面图片URL">
                 </div>
             </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">作者：</label>
-                    <div class="col-sm-8">
-                        <input name="author" class="form-control" type="text">
-                    </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">作者：</label>
+                <div class="col-sm-9">
+                    <input name="author" class="form-control" type="text" placeholder="请输入作者名称">
                 </div>
             </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label is-required">出版社：</label>
-                    <div class="col-sm-8">
-                        <input name="press" class="form-control" type="text" required>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">出版时间：</label>
-                    <div class="col-sm-8">
-                        <input name="publicTime" class="form-control" type="text">
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12">
-                <div class="form-group">
-                    <label class="col-sm-3 control-label">库存：</label>
-                    <div class="col-sm-8">
-                        <input name="stock" class="form-control" type="text">
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <th:block th:include="include :: footer" />
-    <script th:inline="javascript">
-        var prefix = ctx + "business/book"
-        $("#form-book-add").validate({
-            focusCleanup: true
-        });
+        </div>
 
-        function submitHandler() {
-            if ($.validate.form()) {
-                $.operate.save(prefix + "/add", $('#form-book-add').serialize());
+        <!-- 双列布局：右列 col-md-6 -->
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">出版社：</label>
+                <div class="col-sm-9">
+                    <input name="press" class="form-control" type="text" required placeholder="请输入出版社名称">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">库存：</label>
+                <div class="col-sm-9">
+                    <input name="stock" class="form-control" type="number" min="0" placeholder="请输入非负整数">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">出版时间：</label>
+                <div class="col-sm-9">
+                    <!-- 带日历图标的日期选择器（适配若依样式） -->
+                    <div class="input-group date">
+                        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                        <input type="text"
+                               id="publicTime"
+                               name="publicTime"
+                               class="form-control"
+                               placeholder="请选择出版时间"
+                               readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表单提交按钮（居中显示） -->
+        <div class="col-xs-12 text-center" style="margin-top: 20px;">
+            <button type="button" class="btn btn-primary" onclick="submitHandler()">提交</button>
+            <button type="reset" class="btn btn-default ml-2">重置</button>
+        </div>
+    </form>
+</div>
+
+<th:block th:include="include :: footer"/>
+<script th:inline="javascript">
+    var prefix = ctx + "business/book";
+
+    // 初始化日期选择器（laydate，若依内置）
+    $(function() {
+        laydate.render({
+            elem: '#publicTime',       // 绑定日期输入框ID
+            type: 'date',              // 仅选择日期（年-月-日）
+            format: 'yyyy-MM-dd',      // 适配MySQL的日期格式
+            clear: true,               // 允许清空日期
+            trigger: 'click'           // 点击触发选择器
+        });
+    });
+
+    // 表单校验规则
+    $("#form-book-add").validate({
+        focusCleanup: true,
+        rules: {
+            bookName: {
+                required: true,
+                maxlength: 100         // 限制图书名称长度
+            },
+            press: {
+                required: true,
+                maxlength: 100         // 限制出版社长度
+            },
+            publicTime: {
+                pattern: /^\d{4}-\d{2}-\d{2}$/  // 日期格式校验
+            },
+            stock: {
+                number: true,
+                min: 0                  // 库存非负
+            }
+        },
+        messages: {
+            bookName: {
+                required: "图书名称不能为空",
+                maxlength: "图书名称长度不能超过100个字符"
+            },
+            press: {
+                required: "出版社不能为空",
+                maxlength: "出版社名称长度不能超过100个字符"
+            },
+            publicTime: {
+                pattern: "出版时间格式错误，请选择 YYYY-MM-DD 格式的日期"
+            },
+            stock: {
+                number: "库存必须为数字",
+                min: "库存不能为负数"
             }
         }
-    </script>
+    });
+
+    // 提交处理函数
+    function submitHandler() {
+        if ($.validate.form()) {
+            // 兜底处理：日期为空则置空字符串（后端转null）
+            var publicTimeVal = $("#publicTime").val().trim();
+            if (publicTimeVal === "") {
+                $("#publicTime").val("");
+            }
+            // 提交表单
+            $.operate.save(prefix + "/add", $('#form-book-add').serialize());
+        }
+    }
+</script>
 </body>
 </html>
