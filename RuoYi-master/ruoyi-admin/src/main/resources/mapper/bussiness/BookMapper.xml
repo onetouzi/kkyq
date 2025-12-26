@@ -14,10 +14,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="publicTime"    column="public_time"    />
         <result property="stock"    column="stock"    />
         <result property="status"    column="status"    />
+        <result property="typeId"    column="type_id"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
     </resultMap>
 
     <sql id="selectBookVo">
-        select id, book_no, book_name, img, author, press, public_time, stock, status from book
+        select id, book_no, book_name, img, author, press, public_time, stock, status, type_id, create_time, update_time from book
     </sql>
 
     <select id="selectBookList" parameterType="Book" resultMap="BookResult">
@@ -28,9 +31,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="img != null  and img != ''"> and img = #{img}</if>
             <if test="author != null  and author != ''"> and author = #{author}</if>
             <if test="press != null  and press != ''"> and press = #{press}</if>
-            <if test="publicTime != null  and publicTime != ''"> and public_time = #{publicTime}</if>
+            <if test="publicTime != null and publicTime != ''"> and public_time = #{publicTime}</if>
             <if test="stock != null "> and stock = #{stock}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="typeId != null "> and type_id = #{typeId}</if>
         </where>
     </select>
     
@@ -39,29 +43,33 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
-    <insert id="insertBook" parameterType="Book">
+    <insert id="insertBook" parameterType="Book" useGeneratedKeys="true" keyProperty="id">
         insert into book
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="id != null">id,</if>
             <if test="bookNo != null">book_no,</if>
             <if test="bookName != null and bookName != ''">book_name,</if>
             <if test="img != null">img,</if>
             <if test="author != null">author,</if>
-            <if test="press != null and press != ''">press,</if>
+            <if test="press != null">press,</if>
             <if test="publicTime != null">public_time,</if>
             <if test="stock != null">stock,</if>
             <if test="status != null">status,</if>
+            <if test="typeId != null">type_id,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="id != null">#{id},</if>
             <if test="bookNo != null">#{bookNo},</if>
             <if test="bookName != null and bookName != ''">#{bookName},</if>
             <if test="img != null">#{img},</if>
             <if test="author != null">#{author},</if>
-            <if test="press != null and press != ''">#{press},</if>
+            <if test="press != null">#{press},</if>
             <if test="publicTime != null">#{publicTime},</if>
             <if test="stock != null">#{stock},</if>
             <if test="status != null">#{status},</if>
+            <if test="typeId != null">#{typeId},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
          </trim>
     </insert>
 
@@ -72,10 +80,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
             <if test="img != null">img = #{img},</if>
             <if test="author != null">author = #{author},</if>
-            <if test="press != null and press != ''">press = #{press},</if>
+            <if test="press != null">press = #{press},</if>
             <if test="publicTime != null">public_time = #{publicTime},</if>
             <if test="stock != null">stock = #{stock},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="typeId != null">type_id = #{typeId},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
         where id = #{id}
     </update>
@@ -90,107 +101,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{id}
         </foreach>
     </delete>
-
-    <resultMap type="Book" id="BookResult">
-        <result property="id"    column="id"    />
-        <result property="bookNo"    column="book_no"    />
-        <result property="bookName"    column="book_name"    />
-        <result property="img"    column="img"    />
-        <result property="author"    column="author"    />
-        <result property="press"    column="press"    />
-        <result property="publicTime"    column="public_time"    />
-        <result property="stock"    column="stock"    />
-        <result property="status"    column="status"    />
-        <result property="typeId"    column="type_id"    />
-        <association property="bookType"  javaType="BookType"   resultMap="bookTypeResult" />
-    </resultMap>
-    <resultMap type="BookType" id="bookTypeResult">
-        <result property="id"    column="id"    />
-        <result property="parentId"    column="parent_id"    />
-        <result property="tname"    column="tname"    />
-        <result property="orderNum"    column="order_num"    />
-        <result property="status"    column="status"    />
-        <result property="parentName" column="parent_name" />
-    </resultMap>
-
-    <sql id="selectBookVo">
-        select b.id, b.book_no, b.book_name, b.img, b.author, b.press, b.public_time, b.stock, b.status, b.type_id, t.tname
-        from book b
-                 left join book_type t on b.type_id = t.id
-    </sql>
-
-    <select id="selectBookList" parameterType="Book" resultMap="BookResult">
-        <include refid="selectBookVo"/>
-        <where>
-            <if test="bookNo != null  and bookNo != ''"> and b.book_no = #{bookNo}</if>
-            <if test="bookName != null  and bookName != ''"> and b.book_name like concat('%', #{bookName}, '%')</if>
-            <if test="img != null  and img != ''"> and b.img = #{img}</if>
-            <if test="author != null  and author != ''"> and b.author = #{author}</if>
-            <if test="press != null  and press != ''"> and b.press = #{press}</if>
-            <if test="publicTime != null  and publicTime != ''"> and b.public_time = #{publicTime}</if>
-            <if test="stock != null "> and b.stock = #{stock}</if>
-            <if test="status != null  and status != ''"> and b.status = #{status}</if>
-            <if test="typeId != null "> and b.type_id = #{typeId}</if>
-        </where>
-    </select>
-
-    <select id="selectBookById" parameterType="Long" resultMap="BookResult">
-        <include refid="selectBookVo"/>
-        where b.id = #{id}
-    </select>
-
-    <insert id="insertBook" parameterType="Book" useGeneratedKeys="true" keyProperty="id">
-        insert into book
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="bookNo != null">book_no,</if>
-            <if test="bookName != null and bookName != ''">book_name,</if>
-            <if test="img != null">img,</if>
-            <if test="author != null and author != ''">author,</if>
-            <if test="press != null">press,</if>
-            <if test="publicTime != null">public_time,</if>
-            <if test="stock != null">stock,</if>
-            <if test="status != null">status,</if>
-            <if test="typeId != null">type_id,</if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="bookNo != null">#{bookNo},</if>
-            <if test="bookName != null and bookName != ''">#{bookName},</if>
-            <if test="img != null">#{img},</if>
-            <if test="author != null and author != ''">#{author},</if>
-            <if test="press != null">#{press},</if>
-            <if test="publicTime != null">#{publicTime},</if>
-            <if test="stock != null">#{stock},</if>
-            <if test="status != null">#{status},</if>
-            <if test="typeId != null">#{typeId},</if>
-        </trim>
-    </insert>
-
-    <update id="updateBook" parameterType="Book">
-        update book
-        <trim prefix="SET" suffixOverrides=",">
-            <if test="bookNo != null">book_no = #{bookNo},</if>
-            <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
-            <if test="img != null">img = #{img},</if>
-            <if test="author != null and author != ''">author = #{author},</if>
-            <if test="press != null">press = #{press},</if>
-            <if test="publicTime != null">public_time = #{publicTime},</if>
-            <if test="stock != null">stock = #{stock},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="typeId != null">type_id = #{typeId},</if>
-        </trim>
-        where id = #{id}
-    </update>
-
-    <delete id="deleteBookById" parameterType="Long">
-        delete from book where id = #{id}
-    </delete>
-
-    <delete id="deleteBookByIds" parameterType="String">
-        delete from book where id in
-        <foreach item="id" collection="array" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </delete>
-
 
 </mapper>

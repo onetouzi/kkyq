@@ -32,7 +32,9 @@
                         </li>
                         <li>
                             <label>出版时间：</label>
-                            <input type="text" name="publicTime" class="form-control laydate" placeholder="yyyy-MM-dd" onclick="laydate({istime: false, format: 'yyyy-MM-dd'})"/>
+                            <!-- 改用 laydate 日期选择器，强制 YYYY-MM-DD 格式 -->
+                            <input type="text" class="form-control date-input" placeholder="请选择出版时间"
+                                   name="publicTime" onclick="laydate({elem:this, format:'YYYY-MM-DD'})"/>
                         </li>
                         <li>
                             <label>库存：</label>
