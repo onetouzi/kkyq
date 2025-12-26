@@ -7,5 +7,5 @@
 /dataSources/
 /dataSources.local.xml
 
-/model/val/*
-model/book_dataset/
+/model/val/
+/model/book_dataset/

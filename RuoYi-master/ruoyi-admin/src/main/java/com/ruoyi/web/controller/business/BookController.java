@@ -3,10 +3,13 @@
     import java.util.Date;
     import java.util.List;
 
+    import com.ruoyi.common.core.domain.entity.SysUser;
     import com.ruoyi.common.utils.DateUtils;
+    import com.ruoyi.common.utils.ShiroUtils;
     import org.apache.shiro.authz.annotation.RequiresPermissions;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.stereotype.Controller;
+    import org.springframework.ui.Model;
     import org.springframework.ui.ModelMap;
     import org.springframework.web.bind.annotation.GetMapping;
     import org.springframework.web.bind.annotation.PathVariable;
@@ -76,12 +79,23 @@
          */
         @RequiresPermissions("business:book:add")
         @GetMapping("/add")
-        public String add(ModelMap mmap)
-        {
-            //格式化一个日期作为编号
-            String no = DateUtils.parseDateToStr("yyyyMMddHHmmssSSS",new Date());
-            mmap.put("bookNo","no");
-            return prefix + "/add";
+        public String add(Model model) {
+            // 关键：传入user对象（优先从Shiro/SecurityContext获取登录用户，没有则初始化空对象）
+            SysUser user = getLoginUser(); // 若依有现成的工具类：ShiroUtils.getSysUser()
+            if (user == null) {
+                user = new SysUser(); // 兜底：初始化空对象，避免null
+            }
+            model.addAttribute("user", user); // 必须往Model中放user
+
+            // 其他业务逻辑（比如传入书籍空对象）
+            model.addAttribute("book", new Book());
+
+            return "business/book/add";
+        }
+
+        // 若依获取登录用户的工具方法（直接用ShiroUtils即可）
+        private SysUser getLoginUser() {
+            return ShiroUtils.getSysUser();
         }
 
         /**
