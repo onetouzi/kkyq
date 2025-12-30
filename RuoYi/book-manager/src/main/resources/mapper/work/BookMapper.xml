@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookMapper">
+    
+    <resultMap type="Book" id="BookResult">
+        <result property="id"    column="id"    />
+        <result property="bookNo"    column="book_no"    />
+        <result property="bookName"    column="book_name"    />
+        <result property="img"    column="img"    />
+        <result property="author"    column="author"    />
+        <result property="press"    column="press"    />
+        <result property="publicTime"    column="public_time"    />
+        <result property="stock"    column="stock"    />
+        <result property="status"    column="status"    />
+        <result property="typeName"    column="type_name"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectBookVo">
+        select id, book_no, book_name, img, author, press, public_time, stock, status, type_name, create_time, update_time from book
+    </sql>
+
+    <select id="selectBookList" parameterType="Book" resultMap="BookResult">
+        <include refid="selectBookVo"/>
+        <where>  
+            <if test="bookNo != null  and bookNo != ''"> and book_no = #{bookNo}</if>
+            <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="img != null  and img != ''"> and img = #{img}</if>
+            <if test="author != null  and author != ''"> and author = #{author}</if>
+            <if test="press != null  and press != ''"> and press = #{press}</if>
+            <if test="publicTime != null "> and public_time = #{publicTime}</if>
+            <if test="stock != null "> and stock = #{stock}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="typeName != null  and typeName != ''"> and type_name like concat('%', #{typeName}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectBookById" parameterType="Long" resultMap="BookResult">
+        <include refid="selectBookVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertBook" parameterType="Book" useGeneratedKeys="true" keyProperty="id">
+        insert into book
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bookNo != null">book_no,</if>
+            <if test="bookName != null and bookName != ''">book_name,</if>
+            <if test="img != null">img,</if>
+            <if test="author != null">author,</if>
+            <if test="press != null">press,</if>
+            <if test="publicTime != null">public_time,</if>
+            <if test="stock != null">stock,</if>
+            <if test="status != null">status,</if>
+            <if test="typeName != null">type_name,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bookNo != null">#{bookNo},</if>
+            <if test="bookName != null and bookName != ''">#{bookName},</if>
+            <if test="img != null">#{img},</if>
+            <if test="author != null">#{author},</if>
+            <if test="press != null">#{press},</if>
+            <if test="publicTime != null">#{publicTime},</if>
+            <if test="stock != null">#{stock},</if>
+            <if test="status != null">#{status},</if>
+            <if test="typeName != null">#{typeName},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBook" parameterType="Book">
+        update book
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="bookNo != null">book_no = #{bookNo},</if>
+            <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
+            <if test="img != null">img = #{img},</if>
+            <if test="author != null">author = #{author},</if>
+            <if test="press != null">press = #{press},</if>
+            <if test="publicTime != null">public_time = #{publicTime},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="typeName != null">type_name = #{typeName},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteBookById" parameterType="Long">
+        delete from book where id = #{id}
+    </delete>
+
+    <delete id="deleteBookByIds" parameterType="String">
+        delete from book where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 补充：根据图书编号查询单条记录（接口定义的selectBookByBookNo方法实现） -->
+    <select id="selectBookByBookNo" parameterType="String" resultMap="BookResult">
+        <include refid="selectBookVo"/>
+        where book_no = #{bookNo}
+    </select>
+
+    <!-- 新增：批量查询存在的图书编号 -->
+    <select id="selectExistBookNos" parameterType="java.util.List" resultType="java.lang.String">
+        select book_no
+        from book
+        where book_no in
+        <foreach item="bookNo" collection="list" open="(" separator="," close=")">
+            #{bookNo}
+        </foreach>
+    </select>
+
+
+</mapper>

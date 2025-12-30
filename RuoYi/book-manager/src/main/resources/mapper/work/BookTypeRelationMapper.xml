@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookTypeRelationMapper">
+    
+    <resultMap type="BookTypeRelation" id="BookTypeRelationResult">
+        <result property="bookId"    column="book_id"    />
+        <result property="bookTypeId"    column="book_type_id"    />
+        <result property="bookName"    column="book_name"    />
+        <result property="typeName"    column="type_name"    />
+    </resultMap>
+
+    <sql id="selectBookTypeRelationVo">
+        select book_id, book_typed_id, book_name, type_name from book_type_relation
+    </sql>
+
+    <select id="selectBookTypeRelationList" parameterType="BookTypeRelation" resultMap="BookTypeRelationResult">
+        <include refid="selectBookTypeRelationVo"/>
+        <where>  
+            <if test="bookId != null "> and book_id = #{bookId}</if>
+            <if test="bookTypedId != null "> and book_typed_id = #{bookTypedId}</if>
+            <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="typeName != null  and typeName != ''"> and type_name like concat('%', #{typeName}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectBookTypeRelationByBookId" parameterType="Long" resultMap="BookTypeRelationResult">
+        <include refid="selectBookTypeRelationVo"/>
+        where book_id = #{bookId}
+    </select>
+
+    <insert id="insertBookTypeRelation" parameterType="BookTypeRelation">
+        insert into INSERT IGNORE book_type_relation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bookId != null">book_id,</if>
+            <if test="bookTypedId != null">book_typed_id,</if>
+            <if test="bookName != null and bookName != ''">book_name,</if>
+            <if test="typeName != null">type_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bookId != null">#{bookId},</if>
+            <if test="bookTypedId != null">#{bookTypedId},</if>
+            <if test="bookName != null and bookName != ''">#{bookName},</if>
+            <if test="typeName != null">#{typeName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBookTypeRelation" parameterType="BookTypeRelation">
+        update book_type_relation
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="bookTypedId != null">book_typed_id = #{bookTypedId},</if>
+            <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
+            <if test="typeName != null">type_name = #{typeName},</if>
+        </trim>
+        where book_id = #{bookId}
+    </update>
+
+    <delete id="deleteBookTypeRelationByBookId" parameterType="Long">
+        delete from book_type_relation where book_id = #{bookId}
+    </delete>
+
+    <delete id="deleteBookTypeRelationByBookIds" parameterType="String">
+        delete from book_type_relation where book_id in 
+        <foreach item="bookId" collection="array" open="(" separator="," close=")">
+            #{bookId}
+        </foreach>
+    </delete>
+
+    <!-- 批量插入图书-类型关联（忽略重复） -->
+    <insert id="batchInsertIgnoreBookTypeRelation">
+        INSERT IGNORE INTO book_type_relation
+        (book_id, book_type_id, book_name, type_name)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.bookId},        <!-- 匹配实体类bookId -->
+            #{item.bookTypedId},   <!-- 匹配实体类bookTypedId（替代错误的typeId） -->
+            #{item.bookName},      <!-- 冗余存储图书名 -->
+            #{item.typeName}     <!-- 冗余存储类型名 -->
+            )
+        </foreach>
+    </insert>
+
+    <!-- BookTypeRelationMapper.xml -->
+    <delete id="deleteBookTypeRelationByBookIdAndTypeIds">
+        DELETE FROM book_type_relation
+        WHERE book_id = #{param1}  <!-- 第一个参数：bookId → param1 -->
+        AND book_type_id IN
+        <foreach collection="param2" item="typeId" open="(" separator="," close=")">
+            #{typeId}  <!-- 第二个参数：typeIds → param2 -->
+        </foreach>
+    </delete>
+
+</mapper>

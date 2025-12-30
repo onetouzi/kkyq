@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('图书列表')" />
+    <style>
+        /* 图片缩略图样式，按需调整 */
+        .book-img-thumbnail {
+            width: 60px;    /* 缩略图宽度 */
+            height: 80px;   /* 缩略图高度 */
+            object-fit: cover; /* 保持图片比例，裁剪多余部分 */
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #eee;
+        }
+        /* 搜索栏图片样式 */
+        .search-img-preview {
+            width: 40px;
+            height: 50px;
+            object-fit: cover;
+            margin-left: 10px;
+        }
+        /* 导入弹窗样式 */
+        .import-modal {
+            display: none;
+        }
+        .import-modal .form-group {
+            margin-bottom: 15px;
+        }
+        .import-modal .form-control {
+            display: inline-block;
+            width: auto;
+            vertical-align: middle;
+        }
+        .import-modal .help-block {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="formId">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>图书编号：</label>
+                            <input type="text" name="bookNo"/>
+                        </li>
+                        <li>
+                            <label>图书名称：</label>
+                            <input type="text" name="bookName"/>
+                        </li>
+                        <li>
+                            <label>封面图片：</label>
+                            <!-- 搜索栏图片显示优化：默认隐藏，选择/输入图片URL后显示 -->
+                            <input type="text" name="img" id="search-img-url" placeholder="请输入图片URL" style="width: 200px;"/>
+                            <img id="search-img-preview" class="search-img-preview" src="" style="display: none;" alt="封面预览"/>
+                        </li>
+                        <li>
+                            <label>作者：</label>
+                            <input type="text" name="author"/>
+                        </li>
+                        <li>
+                            <label>出版社：</label>
+                            <input type="text" name="press"/>
+                        </li>
+                        <li>
+                            <label>出版时间：</label>
+                            <input type="text" class="time-input" placeholder="请选择出版时间" name="publicTime"/>
+                        </li>
+                        <li>
+                            <label>库存：</label>
+                            <input type="text" name="stock"/>
+                        </li>
+                        <li>
+                            <label>图书类别，用逗号分割(科幻,日常)：</label>
+                            <input type="text" name="typeName"/>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="btn-group-sm" id="toolbar" role="group">
+            <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="work:book:add">
+                <i class="fa fa-plus"></i> 添加
+            </a>
+            <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="work:book:edit">
+                <i class="fa fa-edit"></i> 修改
+            </a>
+            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="work:book:remove">
+                <i class="fa fa-remove"></i> 删除
+            </a>
+            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="work:book:export">
+                <i class="fa fa-download"></i> 导出
+            </a>
+            <a class="btn btn-info" onclick="$.table.importExcel()" shiro:hasPermission="work:book:import">
+                <i class="fa fa-upload"></i> 导入
+            </a>
+        </div>
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 导入模板隐藏区域 -->
+<div id="importTpl" class="import-modal">
+    <form class="form-horizontal" enctype="multipart/form-data">
+        <div class="form-group">
+            <label class="col-sm-3 control-label">选择文件：</label>
+            <div class="col-sm-8">
+                <input type="file" id="file" name="file" accept=".xls,.xlsx" class="form-control"/>
+                <div class="help-block">
+                    <i class="fa fa-info-circle"></i> 请上传后缀为.xls或.xlsx的Excel文件，大小不超过10MB
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">下载模板：</label>
+            <div class="col-sm-8">
+                <a href="javascript:void(0)" onclick="downloadTemplate()" class="btn btn-default btn-xs">
+                    <i class="fa fa-download"></i> 图书导入模板
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+    var editFlag = true;
+    var removeFlag = true;
+    var prefix = ctx + "work/book";
+
+    // 显示图片预览弹窗
+    function showImgPreview(imgUrl) {
+        layer.open({
+            type: 1,
+            title: '封面图片预览',
+            shadeClose: true,
+            area: ['auto', 'auto'],
+            content: '<img src="' + imgUrl + '" style="max-width:800px;max-height:600px;" alt="封面图片"/>',
+            btn: ['关闭']
+        });
+    }
+
+    // 下载导入模板
+    function downloadTemplate() {
+        window.location.href = prefix + "/downloadTemplate";
+    }
+
+    // 搜索栏图片预览
+    $(document).ready(function() {
+        $('#search-img-url').on('input change', function() {
+            var url = $(this).val().trim();
+            var previewImg = $('#search-img-preview');
+
+            if (url) {
+                previewImg.attr('src', url).show();
+            } else {
+                previewImg.hide().attr('src', '');
+            }
+        });
+    });
+
+    $(function() {
+        var options = {
+            url: prefix + "/list",
+            createUrl: prefix + "/add",
+            updateUrl: prefix + "/edit/{id}",
+            removeUrl: prefix + "/remove",
+            exportUrl: prefix + "/export",
+            importUrl: prefix + "/import",
+            modalName: "图书",
+            columns: [{
+                checkbox: true
+            },
+                {
+                    field: 'id',
+                    title: '主键',
+                    visible: false
+                },
+                {
+                    field: 'bookNo',
+                    title: '图书编号'
+                },
+                {
+                    field: 'bookName',
+                    title: '图书名称'
+                },
+                {
+                    field: 'img',
+                    title: '封面图片',
+                    formatter: function(value, row, index) {
+                        if (!value || value.trim() === "") {
+                            return '<span class="text-muted">无图片</span>';
+                        }
+                        return '<img src="' + value + '" class="book-img-thumbnail" ' +
+                            'onclick="showImgPreview(\'' + value + '\')" alt="封面图片"/>';
+                    },
+                    width: 80
+                },
+                {
+                    field: 'author',
+                    title: '作者'
+                },
+                {
+                    field: 'press',
+                    title: '出版社'
+                },
+                {
+                    field: 'publicTime',
+                    title: '出版时间'
+                },
+                {
+                    field: 'stock',
+                    title: '库存'
+                },
+                {
+                    field: 'status',
+                    title: '状态'
+                },
+                {
+                    field: 'typeName',
+                    title: '图书类别'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        // 权限控制
+                        if (editFlag) {
+                            actions.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        }
+                        if (removeFlag) {
+                            actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        }
+                        return actions.join('');
+                    }
+                }]
+        };
+        $.table.init(options);
+    });
+
+    // 扩展table对象，添加导入Excel方法
+    !function($) {
+        "use strict";
+
+        // 定义web状态常量（如果全局未定义）
+        if (typeof web_status === 'undefined') {
+            window.web_status = {
+                SUCCESS: 200,
+                WARNING: 300,
+                ERROR: 500
+            };
+        }
+
+        importExcel = function (formId, width, height) {
+            var table = $.table;
+            var currentId = $.common.isEmpty(formId) ? 'importTpl' : formId;
+            var _width = $.common.isEmpty(width) ? "500" : width;
+            var _height = $.common.isEmpty(height) ? "220" : height;
+
+            layer.open({
+                type: 1,
+                area: [_width + 'px', _height + 'px'],
+                fix: false,
+                maxmin: true,
+                shade: 0.3,
+                title: '导入' + table.options.modalName + '数据',
+                content: $('#' + currentId).html(),
+                btn: ['<i class="fa fa-check"></i> 导入', '<i class="fa fa-remove"></i> 取消'],
+                shadeClose: true,
+                btn1: function (index, layero) {
+                    var fileInput = layero.find('#file')[0];
+                    var file = fileInput.files[0];
+
+                    // 验证文件
+                    if (!file) {
+                        $.modal.msgWarning("请选择要导入的Excel文件！");
+                        return false;
+                    }
+
+                    var fileName = file.name;
+                    var fileExt = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+                    if (fileExt !== '.xls' && fileExt !== '.xlsx') {
+                        $.modal.msgWarning("请选择后缀为 “xls”或“xlsx”的Excel文件！");
+                        return false;
+                    }
+
+                    // 验证文件大小（10MB）
+                    var maxSize = 10 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        $.modal.msgWarning("文件大小不能超过10MB！");
+                        return false;
+                    }
+
+                    // 显示加载层
+                    var loadIndex = layer.load(2, {shade: false});
+                    $.modal.disable();
+
+                    // 构建表单数据
+                    var formData = new FormData();
+                    formData.append('file', file);
+
+                    // 发送导入请求
+                    $.ajax({
+                        url: table.options.importUrl,
+                        data: formData,
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function (result) {
+                            layer.close(loadIndex);
+                            $.modal.enable();
+
+                            if (result.code == web_status.SUCCESS) {
+                                layer.close(index);
+                                $.modal.alertSuccess(result.msg);
+                                $.table.refresh();
+                            } else if (result.code == web_status.WARNING) {
+                                $.modal.alertWarning(result.msg);
+                            } else {
+                                $.modal.alertError(result.msg);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            layer.close(loadIndex);
+                            $.modal.enable();
+                            $.modal.alertError("导入失败：" + error);
+                        }
+                    });
+                },
+                btn2: function(index) {
+                    layer.close(index);
+                }
+            });
+        };
+    }(jQuery);
+</script>
+</body>
+</html>

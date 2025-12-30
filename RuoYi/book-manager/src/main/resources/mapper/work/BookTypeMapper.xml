@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookTypeMapper">
+    
+    <resultMap type="BookType" id="BookTypeResult">
+        <result property="id"    column="id"    />
+        <result property="typeName"    column="type_name"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="status"    column="status"    />
+    </resultMap>
+
+    <sql id="selectBookTypeVo">
+        select id, type_name, order_num, status from book_type
+    </sql>
+
+    <select id="selectBookTypeList" parameterType="BookType" resultMap="BookTypeResult">
+        <include refid="selectBookTypeVo"/>
+        <where>  
+            <if test="typeName != null  and typeName != ''"> and type_name like concat('%', #{typeName}, '%')</if>
+            <if test="orderNum != null "> and order_num = #{orderNum}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectBookTypeById" parameterType="Long" resultMap="BookTypeResult">
+        <include refid="selectBookTypeVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertBookType"
+            parameterType="com.ruoyi.system.domain.BookType"
+            useGeneratedKeys="true"
+            keyProperty="id">
+            <selectKey
+                keyProperty="id"
+                keyColumn="id"
+                order="AFTER"
+                resultType="java.lang.Long">
+                SELECT LAST_INSERT_ID()
+                </selectKey>
+        insert into book_type
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test="typeName != null">type_name,</if>
+        <if test="orderNum != null">order_num,</if>
+        <if test="status != null">status,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <if test="typeName != null">#{typeName},</if>
+        <if test="orderNum != null">#{orderNum},</if>
+        <if test="status != null">#{status},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookType" parameterType="BookType">
+        update book_type
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="typeName != null">type_name = #{typeName},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="status != null">status = #{status},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteBookTypeById" parameterType="Long">
+        delete from book_type where id = #{id}
+    </delete>
+
+    <delete id="deleteBookTypeByIds" parameterType="String">
+        delete from book_type where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- BookTypeMapper.xml -->
+    <select id="selectBookTypeIdsByNames" resultType="java.lang.Long">
+        SELECT id FROM book_type WHERE type_name IN
+        <foreach collection="list" item="typeName" open="(" separator="," close=")">
+            #{typeName}
+        </foreach>
+    </select>
+</mapper>
