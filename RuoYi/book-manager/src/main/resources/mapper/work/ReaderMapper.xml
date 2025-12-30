@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.ReaderMapper">
+
+    <resultMap type="Reader" id="ReaderResult">
+        <result property="id"    column="id"    />
+        <result property="readerNo"    column="reader_no"    />
+        <result property="readerName"    column="reader_name"    />
+        <result property="phone"    column="phone"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectReaderVo">
+        select id, reader_no, reader_name, phone, create_time from reader
+    </sql>
+
+    <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        <where>
+            <if test="readerNo != null "> and reader_no = #{readerNo}</if>
+            <if test="readerName != null  and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
+            <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
+        </where>
+    </select>
+
+    <select id="selectReaderById" parameterType="Long" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        where id = #{id}
+    </select>
+
+    <!-- ========== 新增：根据读者编号查询单条数据 ========== -->
+    <select id="selectReaderByReaderNo" parameterType="Long" resultMap="ReaderResult">
+        <include refid="selectReaderVo"/>
+        where reader_no = #{readerNo}
+    </select>
+
+    <!-- ========== 新增：批量查询已存在的读者编号 ========== -->
+    <select id="selectExistReaderNos" parameterType="java.util.List" resultType="java.lang.Long">
+        select reader_no from reader
+        where reader_no in
+        <foreach collection="list" item="readerNo" open="(" separator="," close=")">
+            #{readerNo}
+        </foreach>
+    </select>
+
+    <insert id="insertReader" parameterType="Reader" useGeneratedKeys="true" keyProperty="id">
+        insert into reader
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="readerNo != null">reader_no,</if>
+            <if test="readerName != null">reader_name,</if>
+            <if test="phone != null">phone,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="readerNo != null">#{readerNo},</if>
+            <if test="readerName != null">#{readerName},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateReader" parameterType="Reader">
+        update reader
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="readerNo != null">reader_no = #{readerNo},</if>
+            <if test="readerName != null">reader_name = #{readerName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteReaderById" parameterType="Long">
+        delete from reader where id = #{id}
+    </delete>
+
+    <delete id="deleteReaderByIds" parameterType="String">
+        delete from reader where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
