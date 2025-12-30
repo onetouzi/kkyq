@@ -97,7 +97,13 @@ public class ReaderController extends BaseController
     @ResponseBody
     public AjaxResult addSave(Reader reader)
     {
-        return toAjax(readerService.insertReader(reader));
+        try {
+            // 调用Service执行新增（内含雪花生成+重复校验）
+            return toAjax(readerService.insertReader(reader));
+        } catch (RuntimeException e) {
+            // 捕获编号重复异常，返回错误提示
+            return AjaxResult.error(e.getMessage());
+        }
     }
 
     /**
@@ -166,9 +172,9 @@ public class ReaderController extends BaseController
             StringBuilder failMsg = new StringBuilder(); // 失败详情
 
             // 4. 批量查询已存在的读者编号，提升效率（避免逐行查询数据库）
-            Set<Long> existReaderNos = new HashSet<>();
+            Set<String> existReaderNos = new HashSet<>();
             if (readerList != null && !readerList.isEmpty()) {
-                List<Long> readerNos = new ArrayList<>();
+                List<String> readerNos = new ArrayList<>();
                 // 遍历收集非空读者编号
                 for (Reader reader : readerList) {
                     if (reader != null && reader.getReaderNo() != null) {

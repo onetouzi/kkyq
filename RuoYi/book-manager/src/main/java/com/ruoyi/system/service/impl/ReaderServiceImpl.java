@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.IdUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.ReaderMapper;
@@ -57,6 +58,18 @@ public class ReaderServiceImpl implements IReaderService
     public int insertReader(Reader reader)
     {
         reader.setCreateTime(DateUtils.getNowDate());
+        if (reader.getReaderNo() == null) {
+            // 为空 → 调用雪花算法自动生成19位唯一编号
+            reader.setReaderNo(IdUtils.nextId());
+        } else {
+            // ========== 核心逻辑2：编号非空 → 校验是否重复 ==========
+            Reader existReader = this.selectReaderByReaderNo(reader.getReaderNo());
+            if (existReader != null) {
+                // 编号已存在 → 抛出异常（上层Controller捕获返回错误）
+                throw new RuntimeException("读者编号【" + reader.getReaderNo() + "】已存在，请勿重复添加！");
+            }
+        }
+        // 校验通过 → 执行新增入库
         return readerMapper.insertReader(reader);
     }
 
@@ -97,12 +110,12 @@ public class ReaderServiceImpl implements IReaderService
     }
 
     @Override
-    public Set<Long> selectExistReaderNos(List<Long> readerNos) {
+    public Set<String> selectExistReaderNos(List<String> readerNos) {
         return readerMapper.selectExistReaderNos(readerNos);
     }
 
     @Override
-    public Reader selectReaderByReaderNo(Long readerNo) {
+    public Reader selectReaderByReaderNo(String readerNo) {
         return readerMapper.selectReaderByReaderNo(readerNo);
     }
 }

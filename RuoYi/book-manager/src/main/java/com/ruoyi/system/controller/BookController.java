@@ -161,6 +161,11 @@ public class BookController extends BaseController
             return AjaxResult.error(errorMsg);
         }
 
+        if(bookService.selectBookByBookNo(book.getBookNo())!=null){
+            String errorMsg = "图书编号重复";
+            return AjaxResult.error(errorMsg);
+        }
+
         // ========== 2. 图书类型处理（空值/去重/去空格/默认值） ==========
         List<String> bookTypeNames = new ArrayList<>();
         String rawTypeName = book.getTypeName();
@@ -279,6 +284,10 @@ public class BookController extends BaseController
         }
         if (StringUtils.isBlank(book.getBookName())) {
             return AjaxResult.error("修改图书失败：图书名称不能为空！");
+        }
+        if(bookService.selectBookByBookNo(book.getBookNo())!=null){
+            String errorMsg = "图书编号重复";
+            return AjaxResult.error(errorMsg);
         }
 
         try {
@@ -523,7 +532,7 @@ public class BookController extends BaseController
      */
     @RequiresPermissions("work:book:import")
     @Log(title = "图书", businessType = BusinessType.IMPORT)
-    @PostMapping("/import")
+        @PostMapping("/import")
     @ResponseBody
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception

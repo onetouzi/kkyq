@@ -16,10 +16,10 @@
         select id, reader_no, reader_name, phone, create_time from reader
     </sql>
 
-    <select id="selectReaderList" parameterType="Reader" resultMap="ReaderResult">
+    <select id="selectReaderList" parameterType="com.ruoyi.system.domain.Reader" resultMap="ReaderResult">
         <include refid="selectReaderVo"/>
         <where>
-            <if test="readerNo != null "> and reader_no = #{readerNo}</if>
+            <if test="readerNo != null and readerNo != ''"> and reader_no = #{readerNo}</if>
             <if test="readerName != null  and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
             <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
         </where>
@@ -31,7 +31,7 @@
     </select>
 
     <!-- ========== 新增：根据读者编号查询单条数据 ========== -->
-    <select id="selectReaderByReaderNo" parameterType="Long" resultMap="ReaderResult">
+    <select id="selectReaderByReaderNo" parameterType="java.lang.String" resultMap="ReaderResult">
         <include refid="selectReaderVo"/>
         where reader_no = #{readerNo}
     </select>

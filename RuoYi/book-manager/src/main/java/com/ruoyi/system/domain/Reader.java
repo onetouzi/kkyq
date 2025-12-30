@@ -22,7 +22,7 @@ public class Reader extends BaseEntity
 
     /**  */
     @Excel(name = "读者编号")
-    private Long readerNo;
+    private String readerNo;
 
     /**  */
     @Excel(name = "读者姓名")
@@ -45,12 +45,12 @@ public class Reader extends BaseEntity
         return id;
     }
 
-    public void setReaderNo(Long readerNo) 
+    public void setReaderNo(String readerNo)
     {
         this.readerNo = readerNo;
     }
 
-    public Long getReaderNo() 
+    public String getReaderNo()
     {
         return readerNo;
     }

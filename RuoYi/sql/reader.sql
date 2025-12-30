@@ -1,7 +1,10 @@
-CREATE TABLE if not exists reader (
-    id INT NOT NULL PRIMARY KEY ,
-    reader_no INT NOT NULL,
-    reader_name VARCHAR(20),
-    phone VARCHAR(20),
-    create_time DATETIME
+create table reader
+(
+    id          int auto_increment
+        primary key,
+    reader_no   varchar(255) not null,
+    reader_name varchar(20)  null,
+    phone       varchar(20)  null,
+    create_time datetime     null
 );
+

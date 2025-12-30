@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('读者书籍借阅关系列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>读者编号：</label>
+                                <input type="text" name="readerNo"/>
+                            </li>
+                            <li>
+                                <label>读者姓名：</label>
+                                <input type="text" name="readerName"/>
+                            </li>
+                            <li>
+                                <label>书籍编号：</label>
+                                <input type="text" name="bookNo"/>
+                            </li>
+                            <li>
+                                <label>书籍名称：</label>
+                                <input type="text" name="bookName"/>
+                            </li>
+                            <li>
+                                <label>借阅时间：</label>
+                                <input type="text" class="time-input" placeholder="请选择借阅时间，默认当前时间" name="borrowTime"/>
+                            </li>
+                            <li>
+                                <label>归还时间：</label>
+                                <input type="text" class="time-input" placeholder="请选择归还时间" name="returnTime"/>
+                            </li>
+                            <li>
+                                <label>逾期天数，无逾期为0，非负数：</label>
+                                <input type="text" name="overdueDays"/>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="work:record:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="work:record:edit">
+                    <i class="fa fa-edit"></i> 修改
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="work:record:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="work:record:export">
+                    <i class="fa fa-download"></i> 导出
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('work:record:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('work:record:remove')}]];
+        var prefix = ctx + "work/record";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                modalName: "读者书籍借阅关系",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'borrowId',
+                    title: '借阅主键ID，自增唯一',
+                    visible: false
+                },
+                {
+                    field: 'readerNo',
+                    title: '读者编号'
+                },
+                {
+                    field: 'readerName',
+                    title: '读者姓名'
+                },
+                {
+                    field: 'bookNo',
+                    title: '书籍编号'
+                },
+                {
+                    field: 'bookName',
+                    title: '书籍名称'
+                },
+                {
+                    field: 'borrowTime',
+                    title: '借阅时间'
+                },
+                {
+                    field: 'returnTime',
+                    title: '归还时间'
+                },
+                {
+                    field: 'borrowStatus',
+                    title: '借阅状态'
+                },
+                {
+                    field: 'overdueDays',
+                    title: '逾期天数'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.borrowId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.borrowId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+    </script>
+</body>
+</html>

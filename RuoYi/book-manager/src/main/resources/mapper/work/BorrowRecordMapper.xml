@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BorrowRecordMapper">
+    
+    <resultMap type="BorrowRecord" id="BorrowRecordResult">
+        <result property="borrowId"    column="borrow_id"    />
+        <result property="readerNo"    column="reader_no"    />
+        <result property="readerName"    column="reader_name"    />
+        <result property="bookNo"    column="book_no"    />
+        <result property="bookName"    column="book_name"    />
+        <result property="borrowTime"    column="borrow_time"    />
+        <result property="returnTime"    column="return_time"    />
+        <result property="borrowStatus"    column="borrow_status"    />
+        <result property="overdueDays"    column="overdue_days"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectBorrowRecordVo">
+        select borrow_id, reader_no, reader_name, book_no, book_name, borrow_time, return_time, borrow_status, overdue_days, create_time, update_time from borrow_record
+    </sql>
+
+    <select id="selectBorrowRecordList" parameterType="BorrowRecord" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        <where>  
+            <if test="readerNo != null  and readerNo != ''"> and reader_no = #{readerNo}</if>
+            <if test="readerName != null  and readerName != ''"> and reader_name like concat('%', #{readerName}, '%')</if>
+            <if test="bookNo != null  and bookNo != ''"> and book_no = #{bookNo}</if>
+            <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="borrowTime != null "> and borrow_time = #{borrowTime}</if>
+            <if test="returnTime != null "> and return_time = #{returnTime}</if>
+            <if test="borrowStatus != null "> and borrow_status = #{borrowStatus}</if>
+            <if test="overdueDays != null  and overdueDays != ''"> and overdue_days = #{overdueDays}</if>
+        </where>
+    </select>
+    
+    <select id="selectBorrowRecordByBorrowId" parameterType="Long" resultMap="BorrowRecordResult">
+        <include refid="selectBorrowRecordVo"/>
+        where borrow_id = #{borrowId}
+    </select>
+
+    <insert id="insertBorrowRecord" parameterType="BorrowRecord" useGeneratedKeys="true" keyProperty="borrowId">
+        insert into borrow_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="readerNo != null and readerNo != ''">reader_no,</if>
+            <if test="readerName != null and readerName != ''">reader_name,</if>
+            <if test="bookNo != null">book_no,</if>
+            <if test="bookName != null and bookName != ''">book_name,</if>
+            <if test="borrowTime != null">borrow_time,</if>
+            <if test="returnTime != null">return_time,</if>
+            <if test="borrowStatus != null">borrow_status,</if>
+            <if test="overdueDays != null">overdue_days,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="readerNo != null and readerNo != ''">#{readerNo},</if>
+            <if test="readerName != null and readerName != ''">#{readerName},</if>
+            <if test="bookNo != null">#{bookNo},</if>
+            <if test="bookName != null and bookName != ''">#{bookName},</if>
+            <if test="borrowTime != null">#{borrowTime},</if>
+            <if test="returnTime != null">#{returnTime},</if>
+            <if test="borrowStatus != null">#{borrowStatus},</if>
+            <if test="overdueDays != null">#{overdueDays},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateBorrowRecord" parameterType="BorrowRecord">
+        update borrow_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="readerNo != null and readerNo != ''">reader_no = #{readerNo},</if>
+            <if test="readerName != null and readerName != ''">reader_name = #{readerName},</if>
+            <if test="bookNo != null">book_no = #{bookNo},</if>
+            <if test="bookName != null and bookName != ''">book_name = #{bookName},</if>
+            <if test="borrowTime != null">borrow_time = #{borrowTime},</if>
+            <if test="returnTime != null">return_time = #{returnTime},</if>
+            <if test="borrowStatus != null">borrow_status = #{borrowStatus},</if>
+            <if test="overdueDays != null">overdue_days = #{overdueDays},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where borrow_id = #{borrowId}
+    </update>
+
+    <delete id="deleteBorrowRecordByBorrowId" parameterType="Long">
+        delete from borrow_record where borrow_id = #{borrowId}
+    </delete>
+
+    <delete id="deleteBorrowRecordByBorrowIds" parameterType="String">
+        delete from borrow_record where borrow_id in 
+        <foreach item="borrowId" collection="array" open="(" separator="," close=")">
+            #{borrowId}
+        </foreach>
+    </delete>
+
+</mapper>

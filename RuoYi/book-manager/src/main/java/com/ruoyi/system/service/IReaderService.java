@@ -61,7 +61,7 @@ public interface IReaderService
      */
     public int deleteReaderById(Long id);
 
-    Set<Long> selectExistReaderNos(List<Long> readerNos);
+    Set<String> selectExistReaderNos(List<String> readerNos);
 
-    Reader selectReaderByReaderNo(Long readerNo);
+    Reader selectReaderByReaderNo(String readerNo);
 }

@@ -63,7 +63,7 @@ public interface ReaderMapper
      */
     public int deleteReaderByIds(String[] ids);
 
-    Reader selectReaderByReaderNo(Long readerNo);
+    Reader selectReaderByReaderNo(String readerNo);
 
-    Set<Long> selectExistReaderNos(List<Long> readerNos);
+    Set<String> selectExistReaderNos(List<String> readerNos);
 }
