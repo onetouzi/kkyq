@@ -74,6 +74,11 @@
             <version>4.8.2</version>
         </dependency>
 
+        <!-- 花卉管理-->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-pill</artifactId>
+        </dependency>
 
     </dependencies>
 
