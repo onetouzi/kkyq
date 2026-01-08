@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('库存交易统计')" />
+    <style>
+        .stats-box { padding: 20px; border-radius: 4px; color: #fff; margin-bottom: 15px; }
+        .bg-blue { background-color: #1c84c6; }
+        .bg-green { background-color: #1ab394; }
+        .bg-orange { background-color: #f8ac59; }
+        .bg-red { background-color: #ed5565; }
+        .stats-title { font-size: 14px; opacity: 0.9; }
+        .stats-number { font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .ibox-content { background: #fff; border: 1px solid #e7eaec; padding: 15px; }
+        .chart-height { height: 350px; }
+    </style>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="stats-form">
+                <div class="select-list">
+                    <ul>
+                        <li class="select-time">
+                            <label>统计时段：</label>
+                            <input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+                            <span>-</span>
+                            <input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="loadStats()"><i class="fa fa-search"></i>&nbsp;生成统计</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="resetForm()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-sm-12" style="margin-top: 15px;">
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="stats-box bg-blue">
+                        <div class="stats-title">总进货成本</div>
+                        <div class="stats-number" id="totalCost">¥ 0.00</div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="stats-box bg-green">
+                        <div class="stats-title">累计净利润</div>
+                        <div class="stats-number" id="totalProfit">¥ 0.00</div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="stats-box bg-orange">
+                        <div class="stats-title">总销售额</div>
+                        <div class="stats-number" id="totalSales">¥ 0.00</div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="stats-box bg-red">
+                        <div class="stats-title">成交订单数</div>
+                        <div class="stats-number" id="totalOrders">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title"><h5>花卉销量占比</h5></div>
+                <div class="ibox-content">
+                    <div id="flowerPie" class="chart-height"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title"><h5>买家贡献排行</h5></div>
+                <div class="ibox-content">
+                    <div id="userPie" class="chart-height"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title"><h5>利润趋势走向图</h5></div>
+                <div class="ibox-content">
+                    <div id="profitLine" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: echarts-js" />
+
+<script th:inline="javascript">
+    var prefix = ctx + "work/history";
+
+    $(function() {
+        // 初始化若依日期控件
+        layui.use('laydate', function(){
+            var laydate = layui.use('laydate');
+            laydate.render({ elem: '#startTime', theme: 'molv' });
+            laydate.render({ elem: '#endTime', theme: 'molv' });
+        });
+        loadStats();
+    });
+
+    function loadStats() {
+        $.modal.loading("正在计算汇总数据...");
+        // 获取表单参数并请求数据
+        var config = {
+            url: prefix + "/list",
+            type: "post",
+            dataType: "json",
+            data: $("#stats-form").serialize() + "&pageSize=9999", // 统计取大数据量
+            success: function(result) {
+                if (result.code == 0 || result.rows) {
+                    processData(result.rows);
+                } else {
+                    $.modal.alertError("获取数据失败");
+                }
+                $.modal.closeLoading();
+            }
+        };
+        $.ajax(config);
+    }
+
+    function processData(rows) {
+        var cost = 0, profit = 0, sales = 0, orders = 0;
+        var flowerMap = {}, userMap = {}, trendMap = {};
+
+        rows.forEach(function(row) {
+            var p = parseFloat(row.profit || 0);
+            var t = parseFloat(row.totalPrice || 0);
+            var date = row.createTime.substring(0, 10);
+
+            profit += p;
+            trendMap[date] = (trendMap[date] || 0) + p;
+
+            if (row.businessType == '1') { // 销售
+                sales += t;
+                orders++;
+                flowerMap[row.flowerName] = (flowerMap[row.flowerName] || 0) + t;
+                var uName = row.userName || "散客";
+                userMap[uName] = (userMap[uName] || 0) + t;
+            } else if (row.businessType == '0') { // 进货
+                cost += t;
+            }
+        });
+
+        // 更新面板
+        $("#totalCost").text("¥ " + cost.toFixed(2));
+        $("#totalProfit").text("¥ " + profit.toFixed(2));
+        $("#totalSales").text("¥ " + sales.toFixed(2));
+        $("#totalOrders").text(orders);
+
+        // 绘图
+        renderFlowerPie(flowerMap);
+        renderUserPie(userMap);
+        renderProfitLine(trendMap);
+    }
+
+    function renderFlowerPie(map) {
+        var chart = echarts.init(document.getElementById('flowerPie'));
+        var data = Object.keys(map).map(k => ({name: k, value: map[k].toFixed(2)}));
+        chart.setOption({
+            tooltip: { trigger: 'item', formatter: "{b}: ¥{c} ({d}%)" },
+            series: [{ type: 'pie', radius: '60%', data: data }]
+        });
+    }
+
+    function renderUserPie(map) {
+        var chart = echarts.init(document.getElementById('userPie'));
+        var data = Object.keys(map).map(k => ({name: k, value: map[k].toFixed(2)}));
+        chart.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{ type: 'pie', roseType: 'radius', data: data }]
+        });
+    }
+
+    function renderProfitLine(map) {
+        var chart = echarts.init(document.getElementById('profitLine'));
+        var keys = Object.keys(map).sort();
+        var values = keys.map(k => map[k].toFixed(2));
+        chart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: keys },
+            yAxis: { type: 'value' },
+            series: [{
+                name: '日利润', type: 'line', smooth: true,
+                areaStyle: { color: 'rgba(26, 179, 148, 0.3)' },
+                itemStyle: { color: '#1ab394' },
+                data: values
+            }]
+        });
+    }
+
+    function resetForm() {
+        $.form.reset('stats-form');
+        loadStats();
+    }
+</script>
+</body>
+</html>

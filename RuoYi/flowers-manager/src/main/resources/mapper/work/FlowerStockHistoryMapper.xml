@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.FlowerStockHistoryMapper">
+
+    <resultMap type="FlowerStockHistory" id="FlowerStockHistoryResult">
+        <result property="historyId"    column="history_id"    />
+        <result property="flowerId"    column="flower_id"    />
+        <result property="flowerName"    column="flower_name"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="userPhone"    column="user_phone"    />
+        <result property="businessType"    column="business_type"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="costPrice"    column="cost_price"    />
+        <result property="unitPrice"    column="unit_price"    />
+        <result property="totalPrice"    column="total_price"    />
+        <result property="profit"       column="profit"        />
+        <result property="orderId"      column="order_id"      />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectFlowerStockHistoryVo">
+        select history_id, flower_id, flower_name, user_id, user_name, user_phone,
+               business_type, quantity, cost_price, unit_price, total_price,
+               profit, order_id, create_by, create_time, remark
+        from flower_stock_history
+    </sql>
+
+    <select id="selectFlowerStockHistoryList" parameterType="FlowerStockHistory" resultMap="FlowerStockHistoryResult">
+        <include refid="selectFlowerStockHistoryVo"/>
+        <where>
+            <if test="flowerId != null "> and flower_id = #{flowerId}</if>
+            <if test="flowerName != null  and flowerName != ''"> and flower_name like concat('%', #{flowerName}, '%')</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="userName != null  and userName != ''"> and user_name like concat('%', #{userName}, '%')</if>
+            <if test="userPhone != null  and userPhone != ''"> and user_phone = #{userPhone}</if>
+            <if test="businessType != null  and businessType != ''"> and business_type = #{businessType}</if>
+            <if test="orderId != null  and orderId != ''"> and order_id = #{orderId}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(create_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectFlowerStockHistoryByHistoryId" parameterType="Long" resultMap="FlowerStockHistoryResult">
+        <include refid="selectFlowerStockHistoryVo"/>
+        where history_id = #{historyId}
+    </select>
+
+    <insert id="insertFlowerStockHistory" parameterType="FlowerStockHistory" useGeneratedKeys="true" keyProperty="historyId">
+        insert into flower_stock_history
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="flowerId != null">flower_id,</if>
+            <if test="flowerName != null">flower_name,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="userName != null">user_name,</if>
+            <if test="userPhone != null">user_phone,</if>
+            <if test="businessType != null and businessType != ''">business_type,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="costPrice != null">cost_price,</if>
+            <if test="unitPrice != null">unit_price,</if>
+            <if test="totalPrice != null">total_price,</if>
+            <if test="profit != null">profit,</if>
+            <if test="orderId != null">order_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="flowerId != null">#{flowerId},</if>
+            <if test="flowerName != null">#{flowerName},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="userName != null">#{userName},</if>
+            <if test="userPhone != null">#{userPhone},</if>
+            <if test="businessType != null and businessType != ''">#{businessType},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="costPrice != null">#{costPrice},</if>
+            <if test="unitPrice != null">#{unitPrice},</if>
+            <if test="totalPrice != null">#{totalPrice},</if>
+            <if test="profit != null">#{profit},</if>
+            <if test="orderId != null">#{orderId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateFlowerStockHistory" parameterType="FlowerStockHistory">
+        update flower_stock_history
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="flowerId != null">flower_id = #{flowerId},</if>
+            <if test="flowerName != null">flower_name = #{flowerName},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="userPhone != null">user_phone = #{userPhone},</if>
+            <if test="businessType != null and businessType != ''">business_type = #{businessType},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="costPrice != null">cost_price = #{costPrice},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="totalPrice != null">total_price = #{totalPrice},</if>
+            <if test="profit != null">profit = #{profit},</if>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where history_id = #{historyId}
+    </update>
+
+</mapper>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('新增花卉信息')" />
+    <style>
+        /* select2 样式修正 */
+        body .select2-container--bootstrap .select2-selection--single {
+            height: 34px !important;
+            line-height: 34px !important;
+            padding: 0 12px !important;
+            border-radius: 4px !important;
+        }
+        body .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+            line-height: 34px !important;
+            padding-left: 0 !important;
+        }
+        .form-horizontal .control-label {
+            padding-top: 7px !important;
+        }
+        /* 利润相关的颜色样式 */
+        .profit-tip { font-size: 12px; margin-top: 5px; display: block; }
+        .text-profit { color: #1ab394; font-weight: bold; }
+        .text-loss { color: #ed5565; font-weight: bold; }
+        .ml-1 { margin-left: 5px; }
+
+        /* 新增：AI识别结果样式 */
+        .predict-container {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            border: 1px solid #e7eaec;
+            display: none;
+        }
+        .badge-ai { font-size: 11px; padding: 3px 8px; }
+    </style>
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-flower-add">
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">花卉名称：</label>
+                <div class="col-sm-8">
+                    <input name="flowerName" id="flowerName" class="form-control" type="text" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">进价：</label>
+                <div class="col-sm-8">
+                    <input name="purchasePrice" id="purchasePrice" class="form-control" type="number" step="0.01" placeholder="请输入进价" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">售价：</label>
+                <div class="col-sm-8">
+                    <input name="price" id="price" class="form-control" type="number" step="0.01" placeholder="请输入售价" required>
+                    <span id="margin-info" class="profit-tip text-muted">输入价格自动计算毛利率</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">库存量：</label>
+                <div class="col-sm-8">
+                    <input name="num" class="form-control" type="number" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">单位：</label>
+                <div class="col-sm-8">
+                    <input name="unit" class="form-control" type="text" value="盆" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">花卉类型：</label>
+                <div class="col-sm-8">
+                    <select name="flowerType" class="form-control select2">
+                        <option value="观花类">观花类</option>
+                        <option value="观叶类">观叶类</option>
+                        <option value="观果类">观果类</option>
+                        <option value="多肉类">多肉类</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">图片上传：</label>
+                <div class="col-sm-9">
+                    <input type="file" id="imgFile" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="$('#imgFile').click()">
+                        <i class="fa fa-image"></i> 选择图片
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm ml-1" onclick="uploadImage()">
+                        <i class="fa fa-upload"></i> 上传并AI识别
+                    </button>
+
+                    <input type="hidden" id="image" name="image" value="">
+
+                    <div style="margin-top:10px;">
+                        <img id="previewImg" style="max-width: 200px; max-height: 200px; display: none; object-fit: cover; border-radius:4px; border:1px solid #ddd;" />
+                    </div>
+
+                    <div id="predict-container" class="predict-container">
+                        <div>
+                            <span id="predict-badge" class="badge badge-ai"></span>
+                            <span id="predict-score" class="ml-1" style="font-weight: bold;"></span>
+                        </div>
+                        <div id="predict-info" class="text-muted" style="font-size: 11px; margin-top: 5px;"></div>
+                    </div>
+
+                    <div class="text-muted mt-1" style="font-size: 12px;">
+                        提示：支持jpg/png格式，AI会自动校验图片内容。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">备注：</label>
+                <div class="col-sm-8">
+                    <textarea name="remark" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: select2-js" />
+
+<script th:inline="javascript">
+    var prefix = ctx + "work/flower";
+    var imgFirstname = "";
+
+    $(function() {
+        $('.select2').select2({ theme: 'bootstrap' });
+
+        // 实时计算利润
+        $("#purchasePrice, #price").on("input", function() {
+            calcMargin();
+        });
+    });
+
+    // 计算毛利率逻辑
+    function calcMargin() {
+        var buy = parseFloat($("#purchasePrice").val());
+        var sell = parseFloat($("#price").val());
+        if (!isNaN(buy) && !isNaN(sell) && sell !== 0) {
+            var margin = ((sell - buy) / sell * 100).toFixed(2);
+            var text = "预计毛利率：" + margin + "%";
+            $("#margin-info").text(text).removeClass("text-profit text-loss text-muted");
+            margin >= 0 ? $("#margin-info").addClass("text-profit") : $("#margin-info").addClass("text-loss");
+        } else {
+            $("#margin-info").text("输入价格自动计算毛利率").addClass("text-muted").removeClass("text-profit text-loss");
+        }
+    }
+
+    $("#form-flower-add").validate({
+        rules: {
+            purchasePrice: { number: true, min: 0 },
+            price: { number: true, min: 0 },
+            num: { digits: true }
+        },
+        focusCleanup: true
+    });
+
+    // 图片本地预览
+    function previewImage(fileInput) {
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $("#previewImg").attr("src", e.target.result).show();
+            // 选择新图时，重置AI展示区
+            $("#predict-container").hide();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 上传图片并处理 AI 识别结果
+    function uploadImage() {
+        const fileInput = $("#imgFile")[0];
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            $.modal.msgWarning("请先选择图片");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        const loadIndex = layer.load(2, {content: 'AI 识别中...', shade: [0.1, '#fff']});
+
+        $.ajax({
+            url: prefix + "/upload",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(res) {
+                layer.close(loadIndex);
+                if (res.code === 200 || res.code === 0) {
+                    // 1. 保存上传后的文件名
+                    imgFirstname = res.fileName;
+                    $("#image").val(imgFirstname);
+                    if(res.url) $("#previewImg").attr("src", res.url);
+
+                    // 2. 解析 AI 预测结果 (predictResult)
+                    const pr = res.predictResult;
+                    const $container = $("#predict-container");
+                    const $badge = $("#predict-badge");
+                    const $score = $("#predict-score");
+                    const $info = $("#predict-info");
+
+                    if (pr && pr.code === 200) {
+                        $container.fadeIn();
+                        const isTarget = pr.data.is_target;
+                        const scorePercent = (pr.data.score * 100).toFixed(2) + "%";
+
+                        if (isTarget) {
+                            // 情况 A：识别成功，是目标物体
+                            $badge.removeClass("badge-danger").addClass("badge-primary").text("AI 识别通过");
+                            $score.removeClass("text-danger").addClass("text-navy").text("匹配度: " + scorePercent);
+                            $info.text("引擎: " + pr.data.model_info + " | 耗时: " + pr.data.process_time);
+                            $.modal.msgSuccess("图片校验通过");
+                        } else {
+                            // 情况 B：识别成功，但不是花卉/图书
+                            $badge.removeClass("badge-primary").addClass("badge-danger").text("AI 预警：内容不符");
+                            $score.removeClass("text-navy").addClass("text-danger").text("匹配度仅: " + scorePercent);
+                            $info.text("提示：检测到图片内容可能非目标分类，请确认后再提交。");
+                            $.modal.alertWarning("AI 提示：该图片疑似不属于指定分类，请核实图片内容！");
+                        }
+                    } else {
+                        $.modal.msgSuccess("上传成功（AI识别暂不可用）");
+                    }
+                } else {
+                    $.modal.msgError(res.msg || "上传失败");
+                }
+            },
+            error: function() {
+                layer.close(loadIndex);
+                $.modal.msgError("连接服务器失败");
+            }
+        });
+    }
+
+    // 提交表单
+    function submitHandler() {
+        if ($.validate.form()) {
+            if(!$("#image").val()) {
+                $.modal.msgWarning("请先上传并校验图片");
+                return;
+            }
+            $.operate.save(prefix + "/add", $('#form-flower-add').serialize());
+        }
+    }
+</script>
+</body>
+</html>

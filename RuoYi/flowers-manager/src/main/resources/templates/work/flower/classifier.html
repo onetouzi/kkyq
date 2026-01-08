@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物识别系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .upload-area:hover { border-color: #3b82f6; background-color: #f0f7ff; }
+        .loading-spinner { border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center py-10 px-4">
+
+<div class="w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 space-y-6">
+    <h1 class="text-2xl font-bold text-center text-gray-800 border-b pb-4">🌿 植物深度识别助手</h1>
+
+    <div id="drop-zone" class="upload-area border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all">
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+        <div id="preview-container" class="hidden w-full mb-2">
+            <img id="image-preview" src="" alt="预览" class="rounded-lg max-h-64 mx-auto shadow-sm">
+        </div>
+        <div id="upload-prompt" class="text-center">
+            <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-600 font-medium">点击或拖拽上传植物图片</p>
+        </div>
+    </div>
+
+    <div id="loading" class="hidden flex flex-col items-center py-4">
+        <div class="loading-spinner w-8 h-8 border-4 border-blue-200 rounded-full mb-2"></div>
+        <p class="text-sm text-blue-500 font-medium">正在通过神经网络识别...</p>
+    </div>
+
+    <div id="error-container" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start space-x-3">
+        <span class="text-2xl">⚠️</span>
+        <div>
+            <h3 id="error-title" class="text-sm font-bold text-orange-800">无法识别</h3>
+            <p id="error-detail" class="text-xs text-orange-700 mt-1"></p>
+        </div>
+    </div>
+
+    <div id="result-container" class="hidden space-y-4">
+        <div class="flex items-center space-x-2">
+            <span class="w-1 h-6 bg-green-500 rounded-full"></span>
+            <h2 class="text-lg font-bold text-gray-700">识别候选结果</h2>
+        </div>
+        <div id="candidates-list" class="space-y-3"></div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const previewImg = document.getElementById('image-preview');
+    const previewContainer = document.getElementById('preview-container');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const resultContainer = document.getElementById('result-container');
+    const candidatesList = document.getElementById('candidates-list');
+    const loading = document.getElementById('loading');
+    const errorContainer = document.getElementById('error-container');
+    const errorTitle = document.getElementById('error-title');
+    const errorDetail = document.getElementById('error-detail');
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) handleUpload(file);
+    };
+
+    function showError(title, detail) {
+        errorContainer.classList.remove('hidden');
+        errorTitle.innerText = title;
+        errorDetail.innerText = detail;
+        resultContainer.classList.add('hidden');
+    }
+
+    async function handleUpload(file) {
+        // 1. 预览
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewContainer.classList.remove('hidden');
+            uploadPrompt.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+
+        // 2. 状态重置
+        resultContainer.classList.add('hidden');
+        errorContainer.classList.add('hidden');
+        loading.classList.remove('hidden');
+        candidatesList.innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://localhost:8000/predictOnline', {
+                method: 'POST',
+                body: formData
+            });
+
+            const res = await response.json();
+
+            // 处理 404 (非植物) 逻辑
+            if (res.code === 404) {
+                showError("识别失败", res.data.info || "这不是一个可识别的植物图片。");
+                return;
+            }
+
+            if (res.code === 200) {
+                const data = res.data;
+                if (data.candidates && data.candidates.length > 0) {
+                    data.candidates.forEach((item, index) => {
+                        const isBest = index === 0;
+                        const card = document.createElement('div');
+                        card.className = `${isBest ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 transition-all`;
+
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex flex-col">
+                                    <span class="text-md font-bold ${isBest ? 'text-green-800' : 'text-gray-700'}">
+                                        ${isBest ? '🏆 ' : ''}${item.chinese_name}
+                                    </span>
+                                    <span class="text-xs text-gray-400 italic">${item.scientific_name}</span>
+                                </div>
+                                <span class="text-xs font-mono px-2 py-1 rounded-full ${isBest ? 'bg-green-200 text-green-700' : 'bg-gray-200 text-gray-600'}">
+                                    匹配度: ${(item.score * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-sm mt-3 border-t border-dashed pt-2">
+                                <div>
+                                    <span class="text-gray-400 text-[10px] uppercase">科 (Family)</span>
+                                    <p class="text-gray-600 font-medium truncate">${item.family}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400 text-[10px] uppercase">属 (Genus)</span>
+                                    <p class="text-gray-600 font-medium truncate">${item.genus || '未知'}</p>
+                                </div>
+                            </div>
+                        `;
+                        candidatesList.appendChild(card);
+                    });
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    showError("识别结果为空", "未能从图片中提取到足够的植物特征。");
+                }
+            } else {
+                showError("系统错误", res.msg || "远程识别服务返回异常。");
+            }
+        } catch (error) {
+            showError("网络异常", "无法连接到识别服务器，请检查后端运行状态。");
+        } finally {
+            loading.classList.add('hidden');
+        }
+    }
+
+    // 拖拽逻辑保持不变...
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'bg-blue-50'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        const file = e.dataTransfer.files[0];
+        if (file) handleUpload(file);
+    };
+</script>
+</body>
+</html>

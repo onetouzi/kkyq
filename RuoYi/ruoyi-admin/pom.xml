@@ -80,6 +80,13 @@
             <artifactId>ruoyi-pill</artifactId>
         </dependency>
 
+        <!-- 花卉管理 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>flowers-manager</artifactId>
+            <version>4.8.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -248,6 +248,7 @@
         <module>ruoyi-common</module>
         <module>book-manager</module>
         <module>ruoyi-pill</module>
+        <module>flowers-manager</module>
     </modules>
     <packaging>pom</packaging>
 

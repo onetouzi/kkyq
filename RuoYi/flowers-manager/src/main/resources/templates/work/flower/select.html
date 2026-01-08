@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('选择花卉')" />
+    <style>
+        .flower-card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; transition: 0.3s; cursor: pointer; position: relative; background: #fff; }
+        .flower-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .flower-card.selected { border-color: #1ab394; background-color: #f0f9f8; }
+        .flower-img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px 8px 0 0; }
+        .flower-info { padding: 10px; }
+        .flower-price { color: #e4393c; font-weight: bold; font-size: 16px; }
+        .flower-stock { font-size: 12px; color: #888; float: right; }
+        .check-mark { position: absolute; top: 10px; right: 10px; display: none; color: #1ab394; font-size: 22px; z-index: 10; }
+        .flower-card.selected .check-mark { display: block; }
+
+        /* 数量控制器样式 */
+        .quantity-box { padding: 10px; border-top: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .qty-input { width: 50px; text-align: center; border: 1px solid #ddd; margin: 0 5px; height: 26px; }
+        .subtotal { color: #555; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="flower-form">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            花卉名称：<input type="text" name="flowerName" id="searchName"/>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="loadFlowers()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="resetSearch()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-sm-12">
+            <div class="wrapper wrapper-content">
+                <div class="row" id="flowerContainer">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+    $(function() {
+        loadFlowers();
+    });
+
+    function loadFlowers() {
+        var flowerName = $("#searchName").val();
+        $.post(ctx + "work/flower/list", { flowerName: flowerName }, function(res) {
+            var html = "";
+            $.each(res.rows, function(i, item) {
+                html += `
+                <div class="col-sm-4 col-md-3">
+                    <div class="flower-card" data-id="${item.flowerId}" data-name="${item.flowerName}" data-price="${item.price}" data-max="${item.num}">
+                        <i class="fa fa-check-circle check-mark"></i>
+                        <div onclick="toggleSelect(this.parentNode)">
+                            <img src="${item.image}" class="flower-img" onerror="this.src='/img/no_image.png'">
+                            <div class="flower-info">
+                                <h4 class="m-t-none text-navy">${item.flowerName}</h4>
+                                <span class="flower-price">￥${item.price}</span>
+                                <span class="flower-stock">库存: ${item.num}</span>
+                            </div>
+                        </div>
+                        <div class="quantity-box">
+                            <div class="btn-group">
+                                <button class="btn btn-default btn-xs" onclick="changeQty(this, -1)">-</button>
+                                <input type="number" class="qty-input" value="1" min="1" max="${item.num}" onchange="updateSubtotal(this)">
+                                <button class="btn btn-default btn-xs" onclick="changeQty(this, 1)">+</button>
+                            </div>
+                            <div class="subtotal">小计: ￥<span class="sub-val">${item.price}</span></div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            $("#flowerContainer").html(html);
+        });
+    }
+
+    // 切换选中状态
+    function toggleSelect(card) {
+        $(card).toggleClass('selected');
+    }
+
+    // 增减数量
+    function changeQty(btn, step) {
+        var $input = $(btn).siblings('input');
+        var curr = parseInt($input.val());
+        var next = curr + step;
+        var max = parseInt($input.attr('max'));
+
+        if (next >= 1 && next <= max) {
+            $input.val(next).trigger('change');
+        } else if (next > max) {
+            $.modal.msgWarning("购买数量不能超过库存！");
+        }
+    }
+
+    // 更新单个小计金额
+    function updateSubtotal(input) {
+        var $card = $(input).closest('.flower-card');
+        var price = parseFloat($card.data('price'));
+        var qty = parseInt($(input).val());
+        var max = parseInt($(input).attr('max'));
+
+        if (qty < 1) { $(input).val(1); qty = 1; }
+        if (qty > max) { $(input).val(max); qty = max; }
+
+        $card.find('.sub-val').text((price * qty).toFixed(2));
+        // 自动勾选正在修改数量的卡片
+        if(!$card.hasClass('selected')) $card.addClass('selected');
+    }
+
+    function resetSearch() {
+        $("#searchName").val("");
+        loadFlowers();
+    }
+
+    // 关键：被父窗口调用获取最终数据
+    function getSelectedFlowers() {
+        var selected = [];
+        $(".flower-card.selected").each(function() {
+            var qty = parseInt($(this).find('.qty-input').val());
+            selected.push({
+                id: $(this).data('id'),
+                name: $(this).data('name'),
+                price: $(this).data('price'),
+                quantity: qty,
+                subtotal: (parseFloat($(this).data('price')) * qty).toFixed(2)
+            });
+        });
+        return selected;
+    }
+</script>
+</body>
+</html>
