@@ -1,0 +1,1 @@
+INSERT INTO ry_work.sys_user_online (sessionId, login_name, dept_name, ipaddr, login_location, browser, os, status, start_timestamp, last_access_time, expire_time) VALUES ('7d49d347-c3f2-408f-aebf-0b190ed773fe', 'admin', '研发部门', '127.0.0.1', '内网IP', 'Edge 131', 'Windows >=10', 'on_line', '2026-01-08 09:51:53', '2026-01-08 11:15:44', 1800000);

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BuyersMapper">
+
+    <resultMap type="Buyers" id="BuyersResult">
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="userPhone"    column="user_phone"    />
+        <result property="userEmail"    column="user_email"    />
+        <result property="userGender"    column="user_gender"    />
+        <result property="userAddress"    column="user_address"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBuyersVo">
+        select user_id, user_name, user_phone, user_email, user_gender, user_address, remark from buyers
+    </sql>
+
+    <select id="selectBuyersList" parameterType="Buyers" resultMap="BuyersResult">
+        <include refid="selectBuyersVo"/>
+        <where>
+            <if test="userName != null  and userName != ''"> and user_name like concat('%', #{userName}, '%')</if>
+            <if test="userPhone != null  and userPhone != ''"> and user_phone = #{userPhone}</if>
+            <if test="userEmail != null  and userEmail != ''"> and user_email = #{userEmail}</if>
+            <if test="userGender != null  and userGender != ''"> and user_gender = #{userGender}</if>
+            <if test="userAddress != null  and userAddress != ''"> and user_address = #{userAddress}</if>
+        </where>
+    </select>
+
+    <select id="selectBuyersByUserId" parameterType="Long" resultMap="BuyersResult">
+        <include refid="selectBuyersVo"/>
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectBuyersByPhone" parameterType="String" resultMap="BuyersResult">
+        <include refid="selectBuyersVo"/>
+        where user_phone = #{userPhone} limit 1
+    </select>
+
+    <select id="selectBuyersByEmail" parameterType="String" resultMap="BuyersResult">
+        <include refid="selectBuyersVo"/>
+        where user_email = #{userEmail} limit 1
+    </select>
+
+    <insert id="insertBuyers" parameterType="Buyers" useGeneratedKeys="true" keyProperty="userId">
+        insert into buyers
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userName != null and userName != ''">user_name,</if>
+            <if test="userPhone != null and userPhone != ''">user_phone,</if>
+            <if test="userEmail != null">user_email,</if>
+            <if test="userGender != null">user_gender,</if>
+            <if test="userAddress != null">user_address,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userName != null and userName != ''">#{userName},</if>
+            <if test="userPhone != null and userPhone != ''">#{userPhone},</if>
+            <if test="userEmail != null">#{userEmail},</if>
+            <if test="userGender != null">#{userGender},</if>
+            <if test="userAddress != null">#{userAddress},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBuyers" parameterType="Buyers">
+        update buyers
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userName != null and userName != ''">user_name = #{userName},</if>
+            <if test="userPhone != null and userPhone != ''">user_phone = #{userPhone},</if>
+            <if test="userEmail != null">user_email = #{userEmail},</if>
+            <if test="userGender != null">user_gender = #{userGender},</if>
+            <if test="userAddress != null">user_address = #{userAddress},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteBuyersByUserId" parameterType="Long">
+        delete from buyers where user_id = #{userId}
+    </delete>
+
+    <delete id="deleteBuyersByUserIds" parameterType="String">
+        delete from buyers where user_id in
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+</mapper>

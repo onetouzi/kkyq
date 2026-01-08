@@ -665,3 +665,64 @@ $(function() {
         }
     });
 });
+// === 新增：WebSocket 实时预警监听 ===
+function initWebSocket() {
+    var socket;
+    if (typeof (WebSocket) == "undefined") {
+        console.warn("您的浏览器不支持WebSocket，无法接收实时库存预警");
+    } else {
+        // 建立连接。ctx 是若依定义的全局变量（项目路径）
+        // window.location.host 包含端口号
+        var contextPath = window.ctx || "/";
+        // 然后修改 wsUrl 的拼接逻辑
+        var wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://')
+            + window.location.host
+            + (contextPath.endsWith("/") ? contextPath : contextPath + "/")
+            + "websocket/stock";
+
+        socket = new WebSocket(wsUrl);
+
+        // 接收到消息
+        socket.onmessage = function (msg) {
+            var data = msg.data;
+
+            // 检查消息是否以预警前缀开头
+            if (data && data.indexOf("STOCK_WARN:") === 0) {
+                // 提取冒号后面的具体文字内容
+                var alertContent = data.replace("STOCK_WARN:", "");
+
+                // 弹出美化后的通知
+                layer.open({
+                    type: 1,
+                    title: '<i class="fa fa-warning" style="color: #ed5565;"></i> 库存预警',
+                    area: ['340px', 'auto'], // 高度自适应
+                    offset: 'rb',
+                    shade: 0,
+                    time: 15000, // 增加显示时间到 15s
+                    anim: 2,
+                    // 动态插入后端传来的花名内容
+                    content: '<div style="padding: 20px; font-size: 14px; color: #333;">' +
+                        '<p style="margin-bottom: 10px; font-weight: bold; color: #ed5565;">' + alertContent + '</p>' +
+                        '<p style="font-size: 12px; color: #666;">请及时处理，避免影响业务。</p>' +
+                        '</div>',
+                    btn: ['去处理', '关闭'],
+                    yes: function (index) {
+                        // 点击“去处理”跳转到花卉管理列表
+                        var dataUrl = ctx + "work/flower"; // 根据你的实际路径修改
+                        $('a[href$="' + dataUrl + '"]').click();
+                        layer.close(index);
+                    }
+                });
+            }
+        };
+
+        // 连接关闭或报错时自动重连（可选）
+        socket.onclose = function () {
+            console.log("WebSocket连接已关闭，5秒后尝试重连...");
+            setTimeout(initWebSocket, 5000);
+        };
+    }
+}
+
+// 执行初始化
+initWebSocket();

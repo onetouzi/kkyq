@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+    <th:block th:include="include :: header('新增花卉订单')" />
+    <th:block th:include="include :: select2-css" />
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-order-add">
+        <input name="userId" id="userId" type="hidden">
+        <input name="flowerId" id="flowerId" type="hidden">
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">买家搜索：</label>
+                <div class="col-sm-8">
+                    <select id="userSearch" name="userName" class="form-control" required>
+                        <option value="">输入姓名搜索买家...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">选择花卉：</label>
+                <div class="col-sm-8">
+                    <div class="input-group">
+                        <input name="flowerName" id="flowerName" class="form-control" type="text" readonly required placeholder="点击右侧按钮选择花卉">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-primary" onclick="selectFlower()"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">购买数量：</label>
+                <div class="col-sm-8">
+                    <input name="quantity" id="quantity" class="form-control" type="number" min="1" value="1" required readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">单价预览：</label>
+                <div class="col-sm-8">
+                    <input id="unitPrice" class="form-control" type="text" readonly placeholder="自动获取价格">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">总金额：</label>
+                <div class="col-sm-8">
+                    <input name="totalPrice" id="totalPrice" class="form-control" type="text" required readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label is-required">订单状态：</label>
+                <div class="col-sm-8">
+                    <div class="radio-box">
+                        <input type="radio" id="status0" name="status" value="0" checked required>
+                        <label for="status0">已支付</label>
+                    </div>
+                    <div class="radio-box">
+                        <input type="radio" id="status1" name="status" value="1" required>
+                        <label for="status1">未支付</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">备注：</label>
+                <div class="col-sm-8">
+                    <textarea name="remark" class="form-control"></textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: select2-js" />
+
+<script th:inline="javascript">
+    var prefix = ctx + "work/order";
+    var selectedFlowersList = [];
+    var currentUserName = "";
+
+    $(function() {
+        // 1. 初始化买家远程搜索
+        $('#userSearch').select2({
+            ajax: {
+                url: ctx + "work/buyers/list",
+                type: "post",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { userName: params.term };
+                },
+                processResults: function (data) {
+                    return {
+                        results: $.map(data.rows, function (obj) {
+                            return {
+                                id: obj.userName,
+                                text: obj.userName + " (ID:" + obj.userId + ") - " + (obj.userPhone || '无手机号'),
+                                realId: obj.userId,
+                                realName: obj.userName
+                            };
+                        })
+                    };
+                }
+            },
+            placeholder: "请输入姓名搜索",
+            minimumInputLength: 1
+        }).on('select2:select', function (e) {
+            var data = e.params.data;
+            $('#userId').val(data.realId);
+            currentUserName = data.realName;
+        });
+    });
+
+    // 2. 弹出选择花卉窗口
+    function selectFlower() {
+        var url = ctx + "work/flower/select";
+        $.modal.open("选择花卉", url, "1000", "700", function(index, layero) {
+            var iframeWin = layero.find('iframe')[0].contentWindow;
+            var selected = iframeWin.getSelectedFlowers();
+
+            if (!selected || selected.length == 0) {
+                $.modal.alertWarning("您还未选择任何花卉");
+                return;
+            }
+
+            selectedFlowersList = selected;
+            var names = [], ids = [], totalMoney = 0, totalQty = 0;
+
+            $.each(selected, function(i, item) {
+                names.push(item.name + "(x" + item.quantity + ")");
+                ids.push(item.id);
+                var qty = parseInt(item.quantity) || 0;
+                var price = parseFloat(item.price) || 0;
+                totalQty += qty;
+                totalMoney += (qty * price);
+            });
+
+            $("#flowerId").val(ids.join(','));
+            $("#flowerName").val(names.join(', '));
+            $("#quantity").val(totalQty);
+            $("#unitPrice").val(selected.length > 1 ? "多项汇总" : selected[0].price);
+            $("#totalPrice").val(totalMoney.toFixed(2));
+
+            layer.close(index);
+        });
+    }
+
+    $("#form-order-add").validate({
+        focusCleanup: true
+    });
+
+    // 3. 提交处理
+    function submitHandler() {
+        if ($.validate.form()) {
+            if (!selectedFlowersList || selectedFlowersList.length === 0) {
+                $.modal.alertWarning("请至少选择一种花卉！");
+                return;
+            }
+
+            var userId = $("#userId").val();
+            if (!userId) {
+                $.modal.alertWarning("请先搜索并选择买家！");
+                return;
+            }
+
+            // 获取单选框选中的状态值
+            var status = $("input[name='status']:checked").val();
+
+            var data = {
+                userId: userId,
+                userName: currentUserName,
+                status: status, // 0-已支付, 1-未支付
+                totalOrderPrice: $("#totalPrice").val(),
+                remark: $("textarea[name='remark']").val(),
+                items: []
+            };
+
+            $.each(selectedFlowersList, function(i, item) {
+                data.items.push({
+                    flowerId: item.id,
+                    flowerName: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    subtotal: (parseFloat(item.price) * parseInt(item.quantity)).toFixed(2)
+                });
+            });
+
+            $.ajax({
+                url: prefix + "/add",
+                type: "post",
+                contentType: "application/json;charset=utf-8",
+                data: JSON.stringify(data),
+                beforeSend: function () {
+                    $.modal.loading("正在处理中...");
+                },
+                success: function(result) {
+                    $.operate.successCallback(result);
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

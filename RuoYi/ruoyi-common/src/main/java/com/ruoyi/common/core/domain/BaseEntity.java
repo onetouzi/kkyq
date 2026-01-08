@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ruoyi.common.annotation.Excel;
 
 /**
  * Entity基类
@@ -25,6 +26,7 @@ public class BaseEntity implements Serializable
     private String createBy;
 
     /** 创建时间 */
+    @Excel(name = "创建时间",dateFormat = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
 
@@ -32,6 +34,7 @@ public class BaseEntity implements Serializable
     private String updateBy;
 
     /** 更新时间 */
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date updateTime;
 

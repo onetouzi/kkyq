@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.FlowerMapper">
+
+    <resultMap type="Flower" id="FlowerResult">
+        <result property="flowerId"    column="flower_id"    />
+        <result property="flowerName"    column="flower_name"    />
+        <result property="flowerCode"    column="flower_code"    />
+        <result property="flowerType"    column="flower_type"    />
+        <result property="price"    column="price"    />
+        <result property="purchasePrice" column="purchase_price" />
+        <result property="num"    column="num"    />
+        <result property="unit"    column="unit"    />
+        <result property="image"    column="image"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectFlowerVo">
+        select flower_id, flower_name, flower_code, flower_type, price, purchase_price, num, unit, image, status, create_by, create_time, update_by, update_time, remark from flower
+    </sql>
+
+    <select id="selectFlowerList" parameterType="Flower" resultMap="FlowerResult">
+        <include refid="selectFlowerVo"/>
+        <where>
+            <if test="flowerName != null  and flowerName != ''"> and flower_name like concat('%', #{flowerName}, '%')</if>
+            <if test="flowerCode != null  and flowerCode != ''"> and flower_code = #{flowerCode}</if>
+            <if test="flowerType != null  and flowerType != ''"> and flower_type = #{flowerType}</if>
+            <if test="price != null "> and price = #{price}</if>
+            <if test="purchasePrice != null "> and purchase_price = #{purchasePrice}</if>
+            <if test="num != null "> and num = #{num}</if>
+            <if test="unit != null  and unit != ''"> and unit = #{unit}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectFlowerByFlowerId" parameterType="Long" resultMap="FlowerResult">
+        <include refid="selectFlowerVo"/>
+        where flower_id = #{flowerId}
+    </select>
+
+    <insert id="insertFlower" parameterType="Flower" useGeneratedKeys="true" keyProperty="flowerId">
+        insert into flower
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="flowerName != null and flowerName != ''">flower_name,</if>
+            <if test="flowerCode != null">flower_code,</if>
+            <if test="flowerType != null and flowerType != ''">flower_type,</if>
+            <if test="price != null">price,</if>
+            <if test="purchasePrice != null">purchase_price,</if>
+            <if test="num != null">num,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="image != null">image,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="flowerName != null and flowerName != ''">#{flowerName},</if>
+            <if test="flowerCode != null">#{flowerCode},</if>
+            <if test="flowerType != null and flowerType != ''">#{flowerType},</if>
+            <if test="price != null">#{price},</if>
+            <if test="purchasePrice != null">#{purchasePrice},</if>
+            <if test="num != null">#{num},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="image != null">#{image},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateFlower" parameterType="Flower">
+        update flower
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="flowerName != null and flowerName != ''">flower_name = #{flowerName},</if>
+            <if test="flowerCode != null">flower_code = #{flowerCode},</if>
+            <if test="flowerType != null and flowerType != ''">flower_type = #{flowerType},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
+            <if test="num != null">num = #{num},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where flower_id = #{flowerId}
+    </update>
+
+    <delete id="deleteFlowerByFlowerId" parameterType="Long">
+        delete from flower where flower_id = #{flowerId}
+    </delete>
+
+    <delete id="deleteFlowerByFlowerIds" parameterType="String">
+        delete from flower where flower_id in
+        <foreach item="flowerId" collection="array" open="(" separator="," close=")">
+            #{flowerId}
+        </foreach>
+    </delete>
+
+    <select id="selectLowStockFlowers" parameterType="Long" resultMap="FlowerResult">
+        <include refid="selectFlowerVo"/>
+        where num &lt; #{threshold}
+    </select>
+
+    <select id="selectLowStockFlowerNames" parameterType="Long" resultType="String">
+        select flower_name
+        from flower
+        where num &lt; #{threshold}
+          and status = '0'
+    </select>
+
+    <update id="updateFlowerStock">
+        update flower
+        set num = num + #{arg1}
+        where flower_id = #{arg0}
+          and (num + #{arg1} >= 0)
+    </update>
+
+    <select id="selectFlowerByCode" parameterType="String" resultMap="FlowerResult">
+        <include refid="selectFlowerVo"/>
+        where flower_code = #{flowerCode}
+    </select>
+
+</mapper>
